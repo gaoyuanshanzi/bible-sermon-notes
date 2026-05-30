@@ -64,6 +64,9 @@
       </div>
       <div class="header-right">
         <span class="user-badge"><i class="fa-solid fa-user-shield"></i> 관리자(admin)</span>
+        <button id="btn-toggle-library" class="btn-secondary" title="노트 라이브러리 열기/닫기">
+          <i class="fa-solid fa-folder-open"></i> 라이브러리
+        </button>
         <button id="btn-export" class="btn-export" title="작업한 내용을 TXT 파일로 다운로드합니다.">
           <i class="fa-solid fa-file-arrow-down"></i> txt로 내보내기
         </button>
@@ -80,9 +83,14 @@
         <section class="left-panel">
           <div class="panel-header">
             <h2><i class="fa-solid fa-magnifying-glass"></i> 성경 말씀 검색</h2>
-            <button id="btn-search-help" class="btn-icon" title="검색 도움말 보기">
-              <i class="fa-solid fa-circle-question"></i>
-            </button>
+            <div class="panel-header-actions">
+              <button id="btn-bible-catalog" class="btn-icon" title="성경 목록 보기">
+                <i class="fa-solid fa-book"></i>
+              </button>
+              <button id="btn-search-help" class="btn-icon" title="검색 도움말 보기">
+                <i class="fa-solid fa-circle-question"></i>
+              </button>
+            </div>
           </div>
           
           <!-- Search Box Form -->
@@ -95,6 +103,29 @@
             </div>
             <button type="submit" class="btn-primary search-btn"><i class="fa-solid fa-magnifying-glass"></i> 검색</button>
           </form>
+
+          <!-- Bible Catalog Browser (collapsible) -->
+          <div id="bible-catalog" class="bible-catalog-box">
+            <div class="catalog-tabs">
+              <button type="button" id="tab-ot" class="catalog-tab active">구약성경 (OT)</button>
+              <button type="button" id="tab-nt" class="catalog-tab">신약성경 (NT)</button>
+            </div>
+            <div id="catalog-books-ot" class="catalog-books-grid">
+              <!-- Old Testament books rendered dynamically -->
+            </div>
+            <div id="catalog-books-nt" class="catalog-books-grid hidden">
+              <!-- New Testament books rendered dynamically -->
+            </div>
+            <div id="catalog-chapters" class="catalog-chapters-box hidden">
+              <div class="chapters-header">
+                <span id="catalog-selected-book">창세기</span>
+                <button type="button" id="btn-close-chapters" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div id="catalog-chapters-grid" class="chapters-grid">
+                <!-- Chapters rendered dynamically -->
+              </div>
+            </div>
+          </div>
 
           <!-- Search Guide Box (collapsible) -->
           <div id="search-help-box" class="search-help-box">
@@ -112,7 +143,7 @@
             <!-- Initial/Empty State -->
             <div id="results-empty" class="results-state-msg">
               <i class="fa-solid fa-book-open"></i>
-              <p>성경 구절이나 검색할 단어를 입력해 주세요.</p>
+              <p>성경 구절이나 검색할 단어를 입력하거나 위의 성경 아이콘을 눌러 목록에서 선택해 주세요.</p>
             </div>
             
             <!-- Loading State -->
@@ -129,6 +160,29 @@
                   <i class="fa-solid fa-arrow-right-to-bracket"></i> 전체 삽입
                 </button>
               </div>
+
+              <!-- Verse Format Customizer Bar -->
+              <div class="format-bar">
+                <div class="format-options">
+                  <label class="format-option" title="한글과 영어 구절을 모두 삽입합니다.">
+                    <input type="radio" name="insert-format" value="both" checked>
+                    <span>한글+영문</span>
+                  </label>
+                  <label class="format-option" title="한글 구절만 삽입합니다.">
+                    <input type="radio" name="insert-format" value="ko">
+                    <span>한글만</span>
+                  </label>
+                  <label class="format-option" title="영어 구절만 삽입합니다.">
+                    <input type="radio" name="insert-format" value="en">
+                    <span>영문만</span>
+                  </label>
+                </div>
+                <label class="blockquote-toggle" title="인용문 형태로 접두사(>)를 붙여 삽입합니다.">
+                  <input type="checkbox" id="chk-blockquote">
+                  <i class="fa-solid fa-quote-left"></i> <span>인용구(>)</span>
+                </label>
+              </div>
+
               <div id="results-list" class="results-list">
                 <!-- Dynamically rendered list of verses -->
               </div>
@@ -139,8 +193,15 @@
         <!-- Right Panel: Sermon Notes Editor Column -->
         <section class="right-panel">
           <div class="panel-header">
-            <h2><i class="fa-solid fa-pen-to-square"></i> 설교노트 작성</h2>
-            <div class="editor-stats">
+            <div class="panel-header-left">
+              <h2><i class="fa-solid fa-pen-to-square"></i> <span id="current-note-title">설교노트 작성</span></h2>
+              <button id="btn-rename-note" class="btn-icon" title="노트 제목 변경"><i class="fa-solid fa-pen"></i></button>
+              <button id="btn-delete-note" class="btn-icon" title="노트 삭제"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+            <div class="panel-header-right">
+              <button id="btn-copy-note" class="btn-secondary btn-sm" title="노트 내용 클립보드 복사">
+                <i class="fa-solid fa-copy"></i> 복사하기
+              </button>
               <span id="char-count">0자</span>
             </div>
           </div>
@@ -148,9 +209,25 @@
             <textarea id="note-editor" placeholder="이곳에 타이핑하여 설교노트를 작성해 보세요.&#10;왼쪽에서 검색한 성경구절을 '삽입' 버튼을 눌러 커서가 있는 위치에 바로 넣을 수 있습니다."></textarea>
           </div>
         </section>
+
+        <!-- Notes Library Sidebar (Collapsible) -->
+        <aside id="notes-sidebar" class="notes-sidebar hidden">
+          <div class="sidebar-header">
+            <h3><i class="fa-solid fa-folder-closed"></i> 노트 목록</h3>
+            <button id="btn-new-note" class="btn-primary btn-sm" title="새 노트 작성">
+              <i class="fa-solid fa-plus"></i> 새 노트
+            </button>
+          </div>
+          <div id="notes-list" class="notes-list">
+            <!-- Dynamically rendered list of notes -->
+          </div>
+        </aside>
       </div>
     </div>
   </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
 
   <!-- Javascript -->
   <script src="app.js"></script>

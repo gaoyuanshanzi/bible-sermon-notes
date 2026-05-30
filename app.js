@@ -121,9 +121,15 @@ Object.entries(customAbbrevs).forEach(([key, idx]) => {
 // Application Variables & State
 // ==========================================================================
 
+// ==========================================================================
+// Application Variables & State
+// ==========================================================================
+
 let bibleKo = null;
 let bibleAsv = null;
 let currentSearchVerses = []; // Holds the list of verses from the last search
+let notes = []; // Array of sermon notes: { id, title, content, updatedAt }
+let currentNoteId = null; // Currently active note ID
 
 // DOM Elements
 const loginOverlay = document.getElementById('login-overlay');
@@ -152,6 +158,31 @@ const noteEditor = document.getElementById('note-editor');
 const charCount = document.getElementById('char-count');
 const btnExport = document.getElementById('btn-export');
 const btnLogout = document.getElementById('btn-logout');
+
+// New Premium Feature DOM Elements
+const btnToggleLibrary = document.getElementById('btn-toggle-library');
+const btnBibleCatalog = document.getElementById('btn-bible-catalog');
+const bibleCatalog = document.getElementById('bible-catalog');
+const tabOt = document.getElementById('tab-ot');
+const tabNt = document.getElementById('tab-nt');
+const catalogBooksOt = document.getElementById('catalog-books-ot');
+const catalogBooksNt = document.getElementById('catalog-books-nt');
+const catalogChapters = document.getElementById('catalog-chapters');
+const catalogSelectedBook = document.getElementById('catalog-selected-book');
+const btnCloseChapters = document.getElementById('btn-close-chapters');
+const catalogChaptersGrid = document.getElementById('catalog-chapters-grid');
+
+const chkBlockquote = document.getElementById('chk-blockquote');
+
+const currentNoteTitle = document.getElementById('current-note-title');
+const btnRenameNote = document.getElementById('btn-rename-note');
+const btnDeleteNote = document.getElementById('btn-delete-note');
+const btnCopyNote = document.getElementById('btn-copy-note');
+
+const notesSidebar = document.getElementById('notes-sidebar');
+const notesList = document.getElementById('notes-list');
+const btnNewNote = document.getElementById('btn-new-note');
+const toastContainer = document.getElementById('toast-container');
 
 // ==========================================================================
 // Session & Auth Management
@@ -190,12 +221,18 @@ btnLogout.addEventListener('click', () => {
     loginOverlay.classList.remove('hidden');
     adminUsernameInput.value = '';
     adminPasswordInput.value = '';
+    
     // Reset app state
     bibleKo = null;
     bibleAsv = null;
     currentSearchVerses = [];
+    notes = [];
+    currentNoteId = null;
+    
     resultsContent.classList.add('hidden');
     resultsEmpty.classList.remove('hidden');
+    bibleCatalog.classList.remove('show');
+    notesSidebar.classList.add('hidden');
     searchInput.value = '';
     noteEditor.value = '';
     charCount.textContent = '0자';
@@ -222,8 +259,15 @@ async function initApp() {
     bibleKo = await resKo.json();
     bibleAsv = await resAsv.json();
 
+    // Premium Features Initialization
+    loadNotes();
+    renderBibleCatalog();
+    setupPremiumEventListeners();
+
     loadingOverlay.classList.add('hidden');
     appContainer.classList.remove('hidden');
+    
+    showToast('성경 데이터를 성공적으로 불러왔습니다.', 'success');
   } catch (error) {
     alert('성경 데이터를 불러오는 중 오류가 발생했습니다. 서버 상태나 파일 경로를 확인해 주세요.');
     console.error(error);
@@ -635,15 +679,31 @@ btnSearchHelp.addEventListener('click', () => {
 // Note Editor Insertion Logic
 // ==========================================================================
 
+// ==========================================================================
+// Note Editor Insertion Logic
+// ==========================================================================
+
 function insertVerses(versesToInsert) {
   if (versesToInsert.length === 0) return;
+
+  const format = document.querySelector('input[name="insert-format"]:checked')?.value || 'both';
+  const isBlockquote = document.getElementById('chk-blockquote')?.checked || false;
 
   const formattedText = versesToInsert.map(v => {
     const meta = BIBLE_BOOKS[v.bookIdx];
     const koRef = `${meta.koAbbrev} ${v.chapter}:${v.verse}`;
     const enRef = `${meta.abbrev} ${v.chapter}:${v.verse}`;
-    // Format: "태초에 하나님이... (창 1:1) In the beginning... (Gen 1:1)"
-    return `${v.textKo} (${koRef}) ${v.textEn} (${enRef})`;
+    
+    let text = '';
+    if (format === 'both') {
+      text = `${v.textKo} (${koRef}) ${v.textEn} (${enRef})`;
+    } else if (format === 'ko') {
+      text = `${v.textKo} (${koRef})`;
+    } else if (format === 'en') {
+      text = `${v.textEn} (${enRef})`;
+    }
+    
+    return isBlockquote ? `> ${text}` : text;
   }).join('\n') + '\n'; // Add trailing newline for formatting separation
 
   const startPos = noteEditor.selectionStart;
@@ -661,8 +721,9 @@ function insertVerses(versesToInsert) {
   // Focus back to editor
   noteEditor.focus();
   
-  // Update stats
+  // Trigger Auto-save & stats update
   updateEditorStats();
+  autoSaveCurrentNote();
 }
 
 // Insert All button
@@ -684,7 +745,10 @@ function updateEditorStats() {
   charCount.textContent = `${content.length}자`;
 }
 
-noteEditor.addEventListener('input', updateEditorStats);
+noteEditor.addEventListener('input', () => {
+  updateEditorStats();
+  autoSaveCurrentNote();
+});
 
 // ==========================================================================
 // Txt File Export Download
@@ -693,7 +757,7 @@ noteEditor.addEventListener('input', updateEditorStats);
 btnExport.addEventListener('click', () => {
   const content = noteEditor.value;
   if (!content.trim()) {
-    alert('작성된 설교노트 내용이 없습니다. 내용을 입력한 후 내보내기를 진행해 주세요.');
+    showToast('작성된 설교노트 내용이 없습니다. 내용을 입력한 후 내보내기를 진행해 주세요.', 'error');
     noteEditor.focus();
     return;
   }
@@ -707,7 +771,11 @@ btnExport.addEventListener('click', () => {
     const yyyy = now.getFullYear();
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
-    const filename = `sermon_notes_${yyyy}${mm}${dd}.txt`;
+    
+    // Get sanitized active note title for the filename
+    const activeNote = notes.find(n => n.id === currentNoteId);
+    const noteTitle = activeNote ? activeNote.title.replace(/[\/\\?%*:|"<>\s]/g, '_') : 'sermon_notes';
+    const filename = `${noteTitle}_${yyyy}${mm}${dd}.txt`;
 
     const a = document.createElement('a');
     a.href = url;
@@ -718,11 +786,373 @@ btnExport.addEventListener('click', () => {
     // Cleanup
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    showToast('TXT 파일 내보내기가 완료되었습니다.', 'success');
   } catch (err) {
-    alert('파일 내보내기 중 오류가 발생했습니다.');
+    showToast('파일 내보내기 중 오류가 발생했습니다.', 'error');
     console.error(err);
   }
 });
+
+// ==========================================================================
+// Premium Feature: Notes Library State Management (LocalStorage CRUD)
+// ==========================================================================
+
+function loadNotes() {
+  const storedNotes = localStorage.getItem('grace_notes');
+  if (storedNotes) {
+    try {
+      notes = JSON.parse(storedNotes);
+    } catch (e) {
+      console.error('Failed to parse notes from storage:', e);
+      notes = [];
+    }
+  }
+
+  // Create a default initial note if none exists
+  if (!notes || notes.length === 0) {
+    notes = [
+      {
+        id: 'default-' + Date.now(),
+        title: '기본 설교노트',
+        content: '',
+        updatedAt: new Date().toISOString()
+      }
+    ];
+    saveNotes();
+  }
+
+  // Restore the last active note, or default to the first one
+  const lastActiveId = localStorage.getItem('grace_last_active_note');
+  const activeNoteExists = notes.some(n => n.id === lastActiveId);
+  
+  if (lastActiveId && activeNoteExists) {
+    switchNote(lastActiveId);
+  } else {
+    switchNote(notes[0].id);
+  }
+}
+
+function saveNotes() {
+  localStorage.setItem('grace_notes', JSON.stringify(notes));
+  renderNotesList();
+}
+
+function renderNotesList() {
+  notesList.innerHTML = '';
+  
+  // Sort notes by updatedAt in descending order (newest first)
+  const sortedNotes = [...notes].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+  sortedNotes.forEach(note => {
+    const noteEl = document.createElement('div');
+    noteEl.className = `note-item ${note.id === currentNoteId ? 'active' : ''}`;
+    
+    // Formatting date: YYYY-MM-DD HH:mm
+    const date = new Date(note.updatedAt);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const formattedDate = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+
+    noteEl.innerHTML = `
+      <div class="note-item-title">${escapeHTML(note.title)}</div>
+      <div class="note-item-date"><i class="fa-regular fa-clock"></i> ${formattedDate}</div>
+    `;
+
+    noteEl.addEventListener('click', () => {
+      if (note.id !== currentNoteId) {
+        switchNote(note.id);
+      }
+    });
+
+    notesList.appendChild(noteEl);
+  });
+}
+
+function switchNote(noteId) {
+  currentNoteId = noteId;
+  localStorage.setItem('grace_last_active_note', noteId);
+
+  const activeNote = notes.find(n => n.id === noteId);
+  if (activeNote) {
+    currentNoteTitle.textContent = activeNote.title;
+    noteEditor.value = activeNote.content;
+    updateEditorStats();
+  }
+
+  // Update active state in list
+  renderNotesList();
+}
+
+function createNewNote() {
+  const prefix = '새 설교노트';
+  let counter = 1;
+  while (notes.some(n => n.title === `${prefix} ${counter}`)) {
+    counter++;
+  }
+
+  const newNote = {
+    id: 'note-' + Date.now(),
+    title: `${prefix} ${counter}`,
+    content: '',
+    updatedAt: new Date().toISOString()
+  };
+
+  notes.push(newNote);
+  saveNotes();
+  switchNote(newNote.id);
+  
+  showToast(`"${newNote.title}"를 생성했습니다.`, 'success');
+}
+
+function renameActiveNote() {
+  const activeNote = notes.find(n => n.id === currentNoteId);
+  if (!activeNote) return;
+
+  const newTitle = prompt('새로운 노트 제목을 입력해 주세요:', activeNote.title);
+  if (newTitle === null) return; // Cancelled
+  
+  const cleanTitle = newTitle.trim();
+  if (!cleanTitle) {
+    showToast('노트 제목은 공백일 수 없습니다.', 'error');
+    return;
+  }
+
+  activeNote.title = cleanTitle;
+  activeNote.updatedAt = new Date().toISOString();
+  
+  saveNotes();
+  switchNote(activeNote.id);
+  
+  showToast('노트 제목이 변경되었습니다.', 'success');
+}
+
+function deleteActiveNote() {
+  const activeNote = notes.find(n => n.id === currentNoteId);
+  if (!activeNote) return;
+
+  if (!confirm(`"${activeNote.title}" 노트를 정말 삭제하시겠습니까?\n삭제된 내용은 복구할 수 없습니다.`)) {
+    return;
+  }
+
+  // Filter out the deleted note
+  notes = notes.filter(n => n.id !== currentNoteId);
+
+  // If all notes are deleted, create a default empty note
+  if (notes.length === 0) {
+    notes = [
+      {
+        id: 'default-' + Date.now(),
+        title: '기본 설교노트',
+        content: '',
+        updatedAt: new Date().toISOString()
+      }
+    ];
+  }
+
+  saveNotes();
+  switchNote(notes[0].id);
+  
+  showToast('노트가 삭제되었습니다.', 'success');
+}
+
+function autoSaveCurrentNote() {
+  const activeNote = notes.find(n => n.id === currentNoteId);
+  if (activeNote) {
+    activeNote.content = noteEditor.value;
+    activeNote.updatedAt = new Date().toISOString();
+    
+    // Quick save to localStorage without fully re-rendering sidebar lists to avoid losing editor cursor focus
+    localStorage.setItem('grace_notes', JSON.stringify(notes));
+    
+    // Update only the date of the active element in the notes-list
+    const activeEl = notesList.querySelector('.note-item.active');
+    if (activeEl) {
+      const dateEl = activeEl.querySelector('.note-item-date');
+      if (dateEl) {
+        const date = new Date();
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        const hh = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        dateEl.innerHTML = `<i class="fa-regular fa-clock"></i> ${yyyy}-${mm}-${dd} ${hh}:${min}`;
+      }
+    }
+  }
+}
+
+// Utility function to escape HTML characters
+function escapeHTML(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// ==========================================================================
+// Premium Feature: Bible Catalog Browser Setup
+// ==========================================================================
+
+function renderBibleCatalog() {
+  catalogBooksOt.innerHTML = '';
+  catalogBooksNt.innerHTML = '';
+
+  BIBLE_BOOKS.forEach((book, idx) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'catalog-book-btn';
+    btn.title = `${book.name} (${book.abbrev})`;
+    btn.textContent = book.koAbbrev; // Sleek abbreviations e.g. "창", "출"
+
+    btn.addEventListener('click', () => {
+      openCatalogChapters(idx);
+    });
+
+    if (idx < 39) {
+      catalogBooksOt.appendChild(btn);
+    } else {
+      catalogBooksNt.appendChild(btn);
+    }
+  });
+}
+
+function openCatalogChapters(bookIdx) {
+  const book = BIBLE_BOOKS[bookIdx];
+  const bookKo = bibleKo[bookIdx];
+  const chaptersCount = bookKo.chapters.length;
+
+  catalogSelectedBook.textContent = book.koName;
+  catalogChaptersGrid.innerHTML = '';
+
+  for (let c = 1; c <= chaptersCount; c++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chapter-btn';
+    btn.textContent = c;
+
+    btn.addEventListener('click', () => {
+      // Formulate chapter search query e.g. "창 1"
+      const query = `${book.koAbbrev} ${c}`;
+      searchInput.value = query;
+      btnClearSearch.style.display = 'block';
+      
+      // Hide the catalog chapter panel
+      catalogChapters.classList.add('hidden');
+      
+      // Perform search form submit programmatically
+      searchForm.dispatchEvent(new Event('submit'));
+      showToast(`"${book.koName} ${c}장"을 불러왔습니다.`, 'info');
+    });
+
+    catalogChaptersGrid.appendChild(btn);
+  }
+
+  catalogChapters.classList.remove('hidden');
+}
+
+// ==========================================================================
+// Premium Feature: Event Listeners & Toast Setup
+// ==========================================================================
+
+function setupPremiumEventListeners() {
+  // Library Panel Toggle
+  btnToggleLibrary.addEventListener('click', () => {
+    notesSidebar.classList.toggle('hidden');
+    
+    // Save state of library toggle
+    const isVisible = !notesSidebar.classList.contains('hidden');
+    localStorage.setItem('grace_library_visible', isVisible);
+    
+    // Toggle active icon or label
+    btnToggleLibrary.innerHTML = isVisible 
+      ? `<i class="fa-solid fa-folder-closed"></i> 라이브러리`
+      : `<i class="fa-solid fa-folder-open"></i> 라이브러리`;
+  });
+
+  // Load past library toggle state
+  const libraryVisible = localStorage.getItem('grace_library_visible') === 'true';
+  if (libraryVisible) {
+    notesSidebar.classList.remove('hidden');
+    btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-closed"></i> 라이브러리`;
+  }
+
+  // Bible Catalog Toggle
+  btnBibleCatalog.addEventListener('click', () => {
+    bibleCatalog.classList.toggle('show');
+  });
+
+  // Close chapters panel
+  btnCloseChapters.addEventListener('click', () => {
+    catalogChapters.classList.add('hidden');
+  });
+
+  // Catalog Tabs Toggle
+  tabOt.addEventListener('click', () => {
+    tabOt.classList.add('active');
+    tabNt.classList.remove('active');
+    catalogBooksOt.classList.remove('hidden');
+    catalogBooksNt.classList.add('hidden');
+    catalogChapters.classList.add('hidden');
+  });
+
+  tabNt.addEventListener('click', () => {
+    tabNt.classList.add('active');
+    tabOt.classList.remove('active');
+    catalogBooksNt.classList.remove('hidden');
+    catalogBooksOt.classList.add('hidden');
+    catalogChapters.classList.add('hidden');
+  });
+
+  // Note actions
+  btnNewNote.addEventListener('click', createNewNote);
+  btnRenameNote.addEventListener('click', renameActiveNote);
+  btnDeleteNote.addEventListener('click', deleteActiveNote);
+  
+  // Note clipboard copy
+  btnCopyNote.addEventListener('click', () => {
+    const content = noteEditor.value;
+    if (!content.trim()) {
+      showToast('복사할 설교노트 내용이 없습니다.', 'error');
+      return;
+    }
+    
+    navigator.clipboard.writeText(content).then(() => {
+      showToast('노트 내용이 클립보드에 복사되었습니다.', 'success');
+    }).catch(err => {
+      showToast('클립보드 복사 중 오류가 발생했습니다.', 'error');
+      console.error(err);
+    });
+  });
+}
+
+function showToast(message, type = 'info') {
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  
+  // Icon selector
+  let icon = 'circle-info';
+  if (type === 'success') icon = 'circle-check';
+  if (type === 'error') icon = 'circle-exclamation';
+
+  toast.innerHTML = `
+    <i class="fa-solid fa-${icon}"></i>
+    <span>${message}</span>
+  `;
+
+  // Append toast
+  toastContainer.appendChild(toast);
+
+  // Automatically remove toast element after 3 seconds
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
 
 // ==========================================================================
 // Kickstart Application
