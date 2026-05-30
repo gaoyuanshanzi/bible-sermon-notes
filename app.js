@@ -1003,6 +1003,18 @@ function autoSaveCurrentNote() {
 // Real-time Cloud Synchronization Operations (REST Client)
 // ==========================================================================
 
+function getMaxTimestamp(notesList) {
+  if (!notesList || notesList.length === 0) return 0;
+  let maxTime = 0;
+  notesList.forEach(n => {
+    const time = n.updatedAt ? new Date(n.updatedAt).getTime() : 0;
+    if (!isNaN(time) && time > maxTime) {
+      maxTime = time;
+    }
+  });
+  return maxTime;
+}
+
 async function syncFromCloud() {
   if (isSyncing) return;
   isSyncing = true;
@@ -1013,41 +1025,52 @@ async function syncFromCloud() {
     
     const data = await res.json();
     if (data && data.notes && Array.isArray(data.notes)) {
-      const cloudNotesStr = JSON.stringify(data.notes);
+      const cloudNotes = data.notes;
+      const cloudNotesStr = JSON.stringify(cloudNotes);
       const localNotesStr = JSON.stringify(notes);
       
       if (cloudNotesStr !== localNotesStr) {
-        // If there are very recent local edits, push local to cloud instead
-        const timeSinceLastEdit = Date.now() - lastEditTime;
-        if (isLocalEdit && timeSinceLastEdit < 6000) {
-          syncToCloud();
-          return;
-        }
-
-        // Otherwise overwrite local
-        notes = data.notes;
-        localStorage.setItem('grace_notes', JSON.stringify(notes));
+        // Compare maximum modified timestamps
+        const cloudMaxTime = getMaxTimestamp(cloudNotes);
+        const localMaxTime = getMaxTimestamp(notes);
         
-        // Ensure current active note still exists
-        const activeNoteExists = notes.some(n => n.id === currentNoteId);
-        if (!activeNoteExists && notes.length > 0) {
-          currentNoteId = notes[0].id;
-        }
+        // Detect if cloud only contains the default placeholder note
+        const isCloudDefaultOnly = cloudNotes.length === 1 && 
+          (cloudNotes[0].id.startsWith('default') || cloudNotes[0].title === '기본 설교노트');
+        const hasLocalNotes = notes.length > 0 && 
+          !(notes.length === 1 && notes[0].id.startsWith('default') && notes[0].content === '');
 
-        // Update Editor UI
-        const activeNote = notes.find(n => n.id === currentNoteId);
-        if (activeNote) {
-          currentNoteTitle.textContent = activeNote.title;
+        // If local timestamp is newer, or if cloud contains only default placeholder and local has content
+        if (localMaxTime > cloudMaxTime || (isCloudDefaultOnly && hasLocalNotes)) {
+          // Push local notes to cloud
+          await syncToCloud();
+          showToast('로컬 노트를 클라우드에 동기화했습니다.', 'success');
+        } else {
+          // Overwrite local notes with cloud notes
+          notes = cloudNotes;
+          localStorage.setItem('grace_notes', JSON.stringify(notes));
           
-          // Only update editor if it is not currently focused by the user to avoid cursor jumps
-          if (document.activeElement !== noteEditor) {
-            noteEditor.value = activeNote.content;
-            updateEditorStats();
+          // Ensure current active note still exists
+          const activeNoteExists = notes.some(n => n.id === currentNoteId);
+          if (!activeNoteExists && notes.length > 0) {
+            currentNoteId = notes[0].id;
           }
+
+          // Update Editor UI
+          const activeNote = notes.find(n => n.id === currentNoteId);
+          if (activeNote) {
+            currentNoteTitle.textContent = activeNote.title;
+            
+            // Only update editor if it is not currently focused by the user to avoid cursor jumps
+            if (document.activeElement !== noteEditor) {
+              noteEditor.value = activeNote.content;
+              updateEditorStats();
+            }
+          }
+          
+          renderNotesList();
+          showToast('클라우드 노트와 동기화되었습니다.', 'success');
         }
-        
-        renderNotesList();
-        showToast('클라우드 노트와 동기화되었습니다.', 'success');
       }
     }
   } catch (err) {
