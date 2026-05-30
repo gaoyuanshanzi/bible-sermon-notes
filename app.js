@@ -187,6 +187,7 @@ const notesSidebar = document.getElementById('notes-sidebar');
 const notesList = document.getElementById('notes-list');
 const btnNewNote = document.getElementById('btn-new-note');
 const btnCloseLibrary = document.getElementById('btn-close-library');
+const btnDeleteAllNotes = document.getElementById('btn-delete-all-notes');
 const toastContainer = document.getElementById('toast-container');
 
 // ==========================================================================
@@ -980,6 +981,40 @@ function deleteActiveNote() {
   showToast('노트가 삭제되었습니다.', 'success');
 }
 
+function deleteAllNotes() {
+  if (notes.length === 0) {
+    showToast('삭제할 노트가 없습니다.', 'info');
+    return;
+  }
+
+  const count = notes.length;
+  if (!confirm(`모든 설교 노트 ${count}개를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+    return;
+  }
+
+  // Clear all notes and create a fresh default note
+  notes = [
+    {
+      id: 'default-' + Date.now(),
+      title: '기본 설교노트',
+      content: '',
+      updatedAt: new Date().toISOString()
+    }
+  ];
+  currentNoteId = notes[0].id;
+
+  saveNotes();
+  currentNoteTitle.textContent = notes[0].title;
+  noteEditor.value = '';
+  updateEditorStats();
+  renderNotesList();
+
+  // Sync to cloud
+  syncToCloud();
+  showToast(`${count}개의 노트가 모두 삭제되었습니다.`, 'success');
+}
+
+
 function autoSaveCurrentNote() {
   const activeNote = notes.find(n => n.id === currentNoteId);
   if (activeNote) {
@@ -1324,6 +1359,9 @@ function setupPremiumEventListeners() {
   btnNewNote.addEventListener('click', createNewNote);
   btnRenameNote.addEventListener('click', renameActiveNote);
   btnDeleteNote.addEventListener('click', deleteActiveNote);
+  if (btnDeleteAllNotes) {
+    btnDeleteAllNotes.addEventListener('click', deleteAllNotes);
+  }
   
   // Note clipboard copy
   btnCopyNote.addEventListener('click', () => {
