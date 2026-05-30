@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grace Note - 성경 설교노트 플랫폼</title>
+  
+  <!-- Font Setup: Google Fonts Inter & Noto Sans KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Main Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Login Overlay Screen -->
+  <div id="login-overlay" class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo-icon">
+          <i class="fa-solid fa-book-bible"></i>
+        </div>
+        <h1>GRACE NOTE</h1>
+        <p>성경말씀 설교노트 작성 플랫폼</p>
+      </div>
+      <form id="login-form">
+        <div class="input-group">
+          <label for="admin-username"><i class="fa-solid fa-user"></i> 아이디</label>
+          <input type="text" id="admin-username" required placeholder="아이디를 입력하세요">
+        </div>
+        <div class="input-group">
+          <label for="admin-password"><i class="fa-solid fa-key"></i> 비밀번호</label>
+          <input type="password" id="admin-password" required placeholder="비밀번호를 입력하세요">
+        </div>
+        <div id="login-error" class="error-msg">
+          <i class="fa-solid fa-circle-exclamation"></i> 아이디 또는 비밀번호가 올바르지 않습니다.
+        </div>
+        <button type="submit" class="btn-primary login-btn">로그인</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Loading State Overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner-container">
+      <div class="spinner"></div>
+      <p>성경 데이터를 불러오는 중입니다...</p>
+    </div>
+  </div>
+
+  <!-- Main Application Dashboard Container -->
+  <div id="app-container" class="app-container hidden">
+    <!-- Header Area -->
+    <header class="main-header">
+      <div class="header-left">
+        <div class="header-logo">
+          <i class="fa-solid fa-book-bible"></i>
+          <h1>GRACE NOTE</h1>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="user-badge"><i class="fa-solid fa-user-shield"></i> 관리자(admin)</span>
+        <button id="btn-export" class="btn-export" title="작업한 내용을 TXT 파일로 다운로드합니다.">
+          <i class="fa-solid fa-file-arrow-down"></i> txt로 내보내기
+        </button>
+        <button id="btn-logout" class="btn-logout" title="로그아웃">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Container with horizontal and vertical scroll capabilities -->
+    <div class="workspace-wrapper">
+      <div class="workspace-inner">
+        <!-- Left Panel: Bible Search & View Column -->
+        <section class="left-panel">
+          <div class="panel-header">
+            <h2><i class="fa-solid fa-magnifying-glass"></i> 성경 말씀 검색</h2>
+            <button id="btn-search-help" class="btn-icon" title="검색 도움말 보기">
+              <i class="fa-solid fa-circle-question"></i>
+            </button>
+          </div>
+          
+          <!-- Search Box Form -->
+          <form id="search-form" class="search-form">
+            <div class="search-input-wrapper">
+              <input type="text" id="search-input" placeholder="Gen 1:1, 창 1:1, Gen 1:1-15, 창 1:1, 요 2:1 또는 '사랑'" required>
+              <button type="button" id="btn-clear-search" class="btn-clear" title="검색어 지우기">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <button type="submit" class="btn-primary search-btn"><i class="fa-solid fa-magnifying-glass"></i> 검색</button>
+          </form>
+
+          <!-- Search Guide Box (collapsible) -->
+          <div id="search-help-box" class="search-help-box">
+            <h4>💡 성경 검색 방법 가이드</h4>
+            <ul>
+              <li><strong>단일 구절 검색:</strong> <code class="code-ref">Genesis 1:1</code> 또는 <code class="code-ref">Gen 1:1</code> 또는 한국어 약자로 <code class="code-ref">창 1:1</code></li>
+              <li><strong>다중 구절 검색 (최대 10개):</strong> <code class="code-ref">Gen 1:1, John 2:1</code> 또는 <code class="code-ref">창 1:1, 요 2:1</code> (쉼표 `,`로 구분)</li>
+              <li><strong>연속 구절 검색 (범위):</strong> <code class="code-ref">Gen 1:1 - Gen 1:15</code> 또는 <code class="code-ref">창 1:1-15</code> (하이픈 `-` 사용)</li>
+              <li><strong>단어 검색:</strong> 특정 단어인 <code class="code-ref">love</code>나 <code class="code-ref">사랑</code>을 입력하면 해당 단어가 들어간 구절이 모두 나옵니다.</li>
+            </ul>
+          </div>
+
+          <!-- Search Results View Area -->
+          <div class="results-container">
+            <!-- Initial/Empty State -->
+            <div id="results-empty" class="results-state-msg">
+              <i class="fa-solid fa-book-open"></i>
+              <p>성경 구절이나 검색할 단어를 입력해 주세요.</p>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="results-loading" class="results-state-msg hidden">
+              <div class="small-spinner"></div>
+              <p>구절을 검색하는 중입니다...</p>
+            </div>
+
+            <!-- Results Content (rendered dynamically via JS) -->
+            <div id="results-content" class="results-content hidden">
+              <div class="results-header-actions">
+                <span id="results-count" class="results-count">검색 결과: 0건</span>
+                <button id="btn-insert-all" class="btn-secondary btn-sm">
+                  <i class="fa-solid fa-arrow-right-to-bracket"></i> 전체 삽입
+                </button>
+              </div>
+              <div id="results-list" class="results-list">
+                <!-- Dynamically rendered list of verses -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Panel: Sermon Notes Editor Column -->
+        <section class="right-panel">
+          <div class="panel-header">
+            <h2><i class="fa-solid fa-pen-to-square"></i> 설교노트 작성</h2>
+            <div class="editor-stats">
+              <span id="char-count">0자</span>
+            </div>
+          </div>
+          <div class="editor-wrapper">
+            <textarea id="note-editor" placeholder="이곳에 타이핑하여 설교노트를 작성해 보세요.&#10;왼쪽에서 검색한 성경구절을 '삽입' 버튼을 눌러 커서가 있는 위치에 바로 넣을 수 있습니다."></textarea>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Javascript -->
+  <script src="app.js"></script>
+</body>
+</html>

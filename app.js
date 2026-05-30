@@ -1,0 +1,732 @@
+// ==========================================================================
+// Bible Metadata & Book Name Mapping Tables
+// ==========================================================================
+
+const BIBLE_BOOKS = [
+  { id: 'Gen', abbrev: 'Gen', name: 'Genesis', koName: '창세기', koAbbrev: '창' },
+  { id: 'Exo', abbrev: 'Exo', name: 'Exodus', koName: '출애굽기', koAbbrev: '출' },
+  { id: 'Lev', abbrev: 'Lev', name: 'Leviticus', koName: '레위기', koAbbrev: '레' },
+  { id: 'Num', abbrev: 'Num', name: 'Numbers', koName: '민수기', koAbbrev: '민' },
+  { id: 'Deu', abbrev: 'Deu', name: 'Deuteronomy', koName: '신명기', koAbbrev: '신' },
+  { id: 'Jos', abbrev: 'Jos', name: 'Joshua', koName: '여호수아', koAbbrev: '수' },
+  { id: 'Jdg', abbrev: 'Jdg', name: 'Judges', koName: '사사기', koAbbrev: '삿' },
+  { id: 'Rut', abbrev: 'Rut', name: 'Ruth', koName: '룻기', koAbbrev: '룻' },
+  { id: '1Sa', abbrev: '1Sam', name: '1 Samuel', koName: '사무엘상', koAbbrev: '삼상' },
+  { id: '2Sa', abbrev: '2Sam', name: '2 Samuel', koName: '사무엘하', koAbbrev: '삼하' },
+  { id: '1Ki', abbrev: '1Kings', name: '1 Kings', koName: '열왕기상', koAbbrev: '왕상' },
+  { id: '2Ki', abbrev: '2Kings', name: '2 Kings', koName: '열왕기하', koAbbrev: '왕하' },
+  { id: '1Ch', abbrev: '1Chron', name: '1 Chronicles', koName: '역대기상', koAbbrev: '대상' },
+  { id: '2Ch', abbrev: '2Chron', name: '2 Chronicles', koName: '역대기하', koAbbrev: '대하' },
+  { id: 'Ezr', abbrev: 'Ezra', name: 'Ezra', koName: '에스라', koAbbrev: '스' },
+  { id: 'Neh', abbrev: 'Neh', name: 'Nehemiah', koName: '느헤미야', koAbbrev: '느' },
+  { id: 'Est', abbrev: 'Esth', name: 'Esther', koName: '에스더', koAbbrev: '에' },
+  { id: 'Job', abbrev: 'Job', name: 'Job', koName: '욥기', koAbbrev: '욥' },
+  { id: 'Psa', abbrev: 'Ps', name: 'Psalms', koName: '시편', koAbbrev: '시' },
+  { id: 'Pro', abbrev: 'Prov', name: 'Proverbs', koName: '잠언', koAbbrev: '잠' },
+  { id: 'Ecc', abbrev: 'Eccles', name: 'Ecclesiastes', koName: '전도서', koAbbrev: '전' },
+  { id: 'Sng', abbrev: 'Song', name: 'Song of Solomon', koName: '아가', koAbbrev: '아' },
+  { id: 'Isa', abbrev: 'Isa', name: 'Isaiah', koName: '이사야', koAbbrev: '사' },
+  { id: 'Jer', abbrev: 'Jer', name: 'Jeremiah', koName: '예레미야', koAbbrev: '렘' },
+  { id: 'Lam', abbrev: 'Lam', name: 'Lamentations', koName: '예레미야 애가', koAbbrev: '애' },
+  { id: 'Eze', abbrev: 'Ezek', name: 'Ezekiel', koName: '에스겔', koAbbrev: '겔' },
+  { id: 'Dan', abbrev: 'Dan', name: 'Daniel', koName: '다니엘', koAbbrev: '단' },
+  { id: 'Hos', abbrev: 'Hos', name: 'Hosea', koName: '호세아', koAbbrev: '호' },
+  { id: 'Jol', abbrev: 'Joel', name: 'Joel', koName: '요엘', koAbbrev: '욜' },
+  { id: 'Amo', abbrev: 'Amos', name: 'Amos', koName: '아모스', koAbbrev: '암' },
+  { id: 'Oba', abbrev: 'Obad', name: 'Obadiah', koName: '오바디야', koAbbrev: '옵' },
+  { id: 'Jon', abbrev: 'Jonah', name: 'Jonah', koName: '요나', koAbbrev: '욘' },
+  { id: 'Mic', abbrev: 'Mic', name: 'Micah', koName: '미가', koAbbrev: '미' },
+  { id: 'Nam', abbrev: 'Nah', name: 'Nahum', koName: '나훔', koAbbrev: '나' },
+  { id: 'Hab', abbrev: 'Hab', name: 'Habakkuk', koName: '하박국', koAbbrev: '하' },
+  { id: 'Zep', abbrev: 'Zeph', name: 'Zephaniah', koName: '스바냐', koAbbrev: '습' },
+  { id: 'Hag', abbrev: 'Hag', name: 'Haggai', koName: '학개', koAbbrev: '학' },
+  { id: 'Zec', abbrev: 'Zech', name: 'Zechariah', koName: '스가랴', koAbbrev: '슥' },
+  { id: 'Mal', abbrev: 'Mal', name: 'Malachi', koName: '말라기', koAbbrev: '말' },
+  { id: 'Mat', abbrev: 'Matt', name: 'Matthew', koName: '마태복음', koAbbrev: '마' },
+  { id: 'Mrk', abbrev: 'Mark', name: 'Mark', koName: '마가복음', koAbbrev: '막' },
+  { id: 'Luk', abbrev: 'Luke', name: 'Luke', koName: '누가복음', koAbbrev: '눅' },
+  { id: 'Jhn', abbrev: 'John', name: 'John', koName: '요한복음', koAbbrev: '요' },
+  { id: 'Act', abbrev: 'Acts', name: 'Acts', koName: '사도행전', koAbbrev: '행' },
+  { id: 'Rom', abbrev: 'Rom', name: 'Romans', koName: '로마서', koAbbrev: '롬' },
+  { id: '1Co', abbrev: '1Cor', name: '1 Corinthians', koName: '고린도전서', koAbbrev: '고전' },
+  { id: '2Co', abbrev: '2Cor', name: '2 Corinthians', koName: '고린도후서', koAbbrev: '고후' },
+  { id: 'Gal', abbrev: 'Gal', name: 'Galatians', koName: '갈라디아서', koAbbrev: '갈' },
+  { id: 'Eph', abbrev: 'Eph', name: 'Ephesians', koName: '에베소서', koAbbrev: '엡' },
+  { id: 'Php', abbrev: 'Phil', name: 'Philippians', koName: '빌립보서', koAbbrev: '빌' },
+  { id: 'Col', abbrev: 'Col', name: 'Colossians', koName: '골로새서', koAbbrev: '골' },
+  { id: '1Th', abbrev: '1Thess', name: '1 Thessalonians', koName: '데살로니가전서', koAbbrev: '살전' },
+  { id: '2Th', abbrev: '2Thess', name: '2 Thessalonians', koName: '데살로니가후서', koAbbrev: '살후' },
+  { id: '1Ti', abbrev: '1Tim', name: '1 Timothy', koName: '디모데전서', koAbbrev: '딤전' },
+  { id: '2Ti', abbrev: '2Tim', name: '2 Timothy', koName: '디모데후서', koAbbrev: '딤후' },
+  { id: 'Tit', abbrev: 'Titus', name: 'Titus', koName: '디도서', koAbbrev: '딛' },
+  { id: 'Phm', abbrev: 'Philem', name: 'Philemon', koName: '빌레몬서', koAbbrev: '몬' },
+  { id: 'Heb', abbrev: 'Heb', name: 'Hebrews', koName: '히브리서', koAbbrev: '히' },
+  { id: 'Jas', abbrev: 'Jas', name: 'James', koName: '야고보서', koAbbrev: '약' },
+  { id: '1Pe', abbrev: '1Pet', name: '베드로전서', koName: '베드로전서', koAbbrev: '벧전' },
+  { id: '2Pe', abbrev: '2Pet', name: '베드로후서', koName: '베드로후서', koAbbrev: '벧후' },
+  { id: '1Jn', abbrev: '1John', name: '요한일서', koName: '요한일서', koAbbrev: '요일' },
+  { id: '2Jn', abbrev: '2John', name: '요한이서', koName: '요한이서', koAbbrev: '요이' },
+  { id: '3Jn', abbrev: '3John', name: '요한삼서', koName: '요한삼서', koAbbrev: '요삼' },
+  { id: 'Jud', abbrev: 'Jude', name: 'Jude', koName: '유다서', koAbbrev: '유' },
+  { id: 'Rev', abbrev: 'Rev', name: 'Revelation', koName: '요한계시록', koAbbrev: '계' }
+];
+
+const bookMap = {};
+BIBLE_BOOKS.forEach((book, idx) => {
+  // Map standard variations to index
+  bookMap[book.id.toLowerCase()] = idx;
+  bookMap[book.abbrev.toLowerCase()] = idx;
+  bookMap[book.name.toLowerCase().replace(/\s+/g, '')] = idx;
+  bookMap[book.koName.toLowerCase().replace(/\s+/g, '')] = idx;
+  bookMap[book.koAbbrev.toLowerCase()] = idx;
+});
+
+// Custom variations mapping
+const customAbbrevs = {
+  'ge': 0, 'gn': 0, 'ex': 1, 'le': 2, 'lv': 2, 'nu': 3, 'nm': 3, 'de': 4, 'dt': 4,
+  'josh': 5, 'jg': 6, 'ru': 7,
+  '1s': 8, '1 sam': 8, 'i sam': 8, 'i samuel': 8,
+  '2s': 9, '2 sam': 9, 'ii sam': 9, 'ii samuel': 9,
+  '1k': 10, '1 king': 10, 'i king': 10, 'i kings': 10,
+  '2k': 11, '2 king': 11, 'ii king': 11, 'ii kings': 11,
+  '1ch': 12, '1 chr': 12, 'i chron': 12, 'i chronicles': 12,
+  '2ch': 13, '2 chr': 13, 'ii chron': 13, 'ii chronicles': 13,
+  'ne': 15, 'esth': 16, 'es': 16, 'jb': 17, 'psalm': 18, 'pr': 19, 'ec': 20,
+  'songofsongs': 21, 'canticles': 21, 'so': 21, 'is': 22, 'je': 23, 'la': 24,
+  'ezek': 25, 'dn': 26, 'ho': 27, 'joe': 28, 'jl': 28, 'am': 29, 'ob': 30,
+  'jonah': 31, 'mi': 32, 'na': 33, 'hb': 34, 'zp': 35, 'hg': 36, 'zc': 37, 'ml': 38,
+  'mt': 39, 'mk': 40, 'lk': 41, 'jn': 42, 'ac': 43, 'ro': 44, 'rm': 44,
+  '1co': 45, '1 cor': 45, 'i cor': 45, 'i corinthians': 45,
+  '2co': 46, '2 cor': 46, 'ii cor': 46, 'ii corinthians': 46,
+  'ga': 47, 'ep': 48, 'pp': 49, 'co': 50,
+  '1th': 51, '1 thess': 51, 'i thess': 51, 'i thessalonians': 51,
+  '2th': 52, '2 thess': 52, 'ii thess': 52, 'ii thessalonians': 52,
+  '1ti': 53, '1 tim': 53, 'i tim': 53, 'i timothy': 53,
+  '2ti': 54, '2 tim': 54, 'ii tim': 54, 'ii timothy': 54,
+  'ti': 55, 'pm': 56, 'he': 57, 'ja': 58, 'jm': 58,
+  '1pe': 59, '1 pet': 59, 'i pet': 59, 'i peter': 59,
+  '2pe': 60, '2 pet': 60, 'ii pet': 60, 'ii peter': 60,
+  '1jn': 61, '1 john': 61, 'i john': 61,
+  '2jn': 62, '2 john': 62, 'ii john': 62,
+  '3jn': 63, '3 john': 63, 'iii john': 63,
+  're': 65, 'revelations': 65,
+  '대하': 13, '역대기후': 13, '스': 14, '라': 14, '요이': 62, '요삼': 63
+};
+
+Object.entries(customAbbrevs).forEach(([key, idx]) => {
+  bookMap[key] = idx;
+});
+
+// ==========================================================================
+// Application Variables & State
+// ==========================================================================
+
+let bibleKo = null;
+let bibleAsv = null;
+let currentSearchVerses = []; // Holds the list of verses from the last search
+
+// DOM Elements
+const loginOverlay = document.getElementById('login-overlay');
+const loginForm = document.getElementById('login-form');
+const loginError = document.getElementById('login-error');
+const adminUsernameInput = document.getElementById('admin-username');
+const adminPasswordInput = document.getElementById('admin-password');
+
+const loadingOverlay = document.getElementById('loading-overlay');
+const appContainer = document.getElementById('app-container');
+
+const searchForm = document.getElementById('search-form');
+const searchInput = document.getElementById('search-input');
+const btnClearSearch = document.getElementById('btn-clear-search');
+const btnSearchHelp = document.getElementById('btn-search-help');
+const searchHelpBox = document.getElementById('search-help-box');
+
+const resultsEmpty = document.getElementById('results-empty');
+const resultsLoading = document.getElementById('results-loading');
+const resultsContent = document.getElementById('results-content');
+const resultsCount = document.getElementById('results-count');
+const resultsList = document.getElementById('results-list');
+
+const btnInsertAll = document.getElementById('btn-insert-all');
+const noteEditor = document.getElementById('note-editor');
+const charCount = document.getElementById('char-count');
+const btnExport = document.getElementById('btn-export');
+const btnLogout = document.getElementById('btn-logout');
+
+// ==========================================================================
+// Session & Auth Management
+// ==========================================================================
+
+function checkAuth() {
+  const isAuth = sessionStorage.getItem('authenticated') === 'true';
+  if (isAuth) {
+    initApp();
+  } else {
+    loginOverlay.classList.remove('hidden');
+    appContainer.classList.add('hidden');
+  }
+}
+
+loginForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const username = adminUsernameInput.value.trim();
+  const password = adminPasswordInput.value;
+
+  if (username === 'admin' && password === '123jesus') {
+    loginError.style.display = 'none';
+    sessionStorage.setItem('authenticated', 'true');
+    initApp();
+  } else {
+    loginError.style.display = 'flex';
+    adminPasswordInput.value = '';
+    adminPasswordInput.focus();
+  }
+});
+
+btnLogout.addEventListener('click', () => {
+  if (confirm('로그아웃 하시겠습니까?')) {
+    sessionStorage.removeItem('authenticated');
+    appContainer.classList.add('hidden');
+    loginOverlay.classList.remove('hidden');
+    adminUsernameInput.value = '';
+    adminPasswordInput.value = '';
+    // Reset app state
+    bibleKo = null;
+    bibleAsv = null;
+    currentSearchVerses = [];
+    resultsContent.classList.add('hidden');
+    resultsEmpty.classList.remove('hidden');
+    searchInput.value = '';
+    noteEditor.value = '';
+    charCount.textContent = '0자';
+  }
+});
+
+// ==========================================================================
+// Application Initialization
+// ==========================================================================
+
+async function initApp() {
+  loginOverlay.classList.add('hidden');
+  loadingOverlay.classList.remove('hidden');
+
+  try {
+    // Load local Bible files
+    const resKo = await fetch('data/bible_ko.json');
+    const resAsv = await fetch('data/bible_asv.json');
+    
+    if (!resKo.ok || !resAsv.ok) {
+      throw new Error('Bible data files not found or failed to load.');
+    }
+
+    bibleKo = await resKo.json();
+    bibleAsv = await resAsv.json();
+
+    loadingOverlay.classList.add('hidden');
+    appContainer.classList.remove('hidden');
+  } catch (error) {
+    alert('성경 데이터를 불러오는 중 오류가 발생했습니다. 서버 상태나 파일 경로를 확인해 주세요.');
+    console.error(error);
+    loadingOverlay.classList.add('hidden');
+    loginOverlay.classList.remove('hidden');
+    sessionStorage.removeItem('authenticated');
+  }
+}
+
+// ==========================================================================
+// Search Parsing & Execution Logic
+// ==========================================================================
+
+function lookupBookIdx(bookName) {
+  const clean = bookName.toLowerCase().replace(/\s+/g, '');
+  if (clean in bookMap) {
+    return bookMap[clean];
+  }
+  return -1;
+}
+
+// Check if a string contains Korean characters
+function hasKorean(str) {
+  return /[\uac00-\ud7a3]/.test(str);
+}
+
+// Helper: Get single verse details
+function getSingleVerse(bookIdx, chapter, verse) {
+  const bookKo = bibleKo[bookIdx];
+  const bookAsv = bibleAsv[bookIdx];
+  if (!bookKo || !bookAsv) return null;
+
+  const chKo = bookKo.chapters[chapter - 1];
+  const chAsv = bookAsv.chapters[chapter - 1];
+  if (!chKo || !chAsv) return null;
+
+  const textKo = chKo[verse - 1];
+  const textEn = chAsv[verse - 1];
+  if (textKo === undefined || textEn === undefined) return null;
+
+  return {
+    bookIdx,
+    chapter,
+    verse,
+    textKo,
+    textEn
+  };
+}
+
+// Helper: Get verse range
+function getVersesRange(bookIdx, startCh, startVs, endCh, endVs) {
+  const list = [];
+  const bookKo = bibleKo[bookIdx];
+  const bookAsv = bibleAsv[bookIdx];
+  if (!bookKo || !bookAsv) return list;
+
+  for (let c = startCh; c <= endCh; c++) {
+    const chKo = bookKo.chapters[c - 1];
+    const chAsv = bookAsv.chapters[c - 1];
+    if (!chKo || !chAsv) continue;
+
+    const sV = (c === startCh) ? startVs : 1;
+    const eV = (c === endCh) ? Math.min(endVs, chKo.length) : chKo.length;
+
+    for (let v = sV; v <= eV; v++) {
+      const textKo = chKo[v - 1];
+      const textEn = chAsv[v - 1];
+      if (textKo !== undefined && textEn !== undefined) {
+        list.push({
+          bookIdx,
+          chapter: c,
+          verse: v,
+          textKo,
+          textEn
+        });
+      }
+    }
+  }
+  return list;
+}
+
+// Parse Search Query. Returns { verses: [...], error: string | null } or null if not reference pattern
+function parseBibleReference(query) {
+  // Clean query: e.g. "Gen 1:1"
+  const tokens = query.split(',').map(t => t.trim()).filter(Boolean);
+  if (tokens.length === 0) return null;
+
+  // Let's check if the first token looks like a book + numbers structure
+  // Matches "Gen 1", "Gen 1:1", "창 1:1"
+  const refPattern = /^([1-3]?\s*[A-Za-z가-힣]+)\s*\d+/;
+  if (!refPattern.test(tokens[0])) {
+    return null; // Fall back to keyword search
+  }
+
+  // We have a reference search!
+  // Limit to 10 queries
+  const limitedTokens = tokens.slice(0, 10);
+  const results = [];
+
+  for (const token of limitedTokens) {
+    // A. Check if range search: contains '-'
+    if (token.includes('-')) {
+      const rangeParts = token.split('-').map(p => p.trim());
+      if (rangeParts.length !== 2) {
+        return { verses: [], error: '연속 구절 범위를 확인해 주세요. (예: Gen 1:1 - Gen 1:15)' };
+      }
+
+      const startRef = rangeParts[0];
+      const endRef = rangeParts[1];
+
+      // Parse start reference (must be full verse format Book Chapter:Verse)
+      const startMatch = startRef.match(/^([1-3]?\s*[A-Za-z가-힣]+)\s*(\d+)\s*:\s*(\d+)$/);
+      if (!startMatch) {
+        return { verses: [], error: '시작 구절의 형식(장:절)이 올바르지 않습니다. (예: Gen 1:1)' };
+      }
+
+      const bookIdx = lookupBookIdx(startMatch[1]);
+      if (bookIdx === -1) {
+        return { verses: [], error: `찾을 수 없는 성경책 이름입니다: "${startMatch[1]}"` };
+      }
+
+      const startCh = parseInt(startMatch[2], 10);
+      const startVs = parseInt(startMatch[3], 10);
+
+      let endCh = startCh;
+      let endVs = startVs;
+
+      // Parse end reference:
+      // Case A.1: Full reference (e.g. Gen 1:15 or 창 1:15)
+      const endFullMatch = endRef.match(/^([1-3]?\s*[A-Za-z가-힣]+)\s*(\d+)\s*:\s*(\d+)$/);
+      if (endFullMatch) {
+        const endBookIdx = lookupBookIdx(endFullMatch[1]);
+        if (endBookIdx !== bookIdx) {
+          return { verses: [], error: '서로 다른 책 사이의 구절 범위 검색은 지원하지 않습니다.' };
+        }
+        endCh = parseInt(endFullMatch[2], 10);
+        endVs = parseInt(endFullMatch[3], 10);
+      } else {
+        // Case A.2: Chapter:Verse (e.g. 2:15)
+        const endChVsMatch = endRef.match(/^(\d+)\s*:\s*(\d+)$/);
+        if (endChVsMatch) {
+          endCh = parseInt(endChVsMatch[1], 10);
+          endVs = parseInt(endChVsMatch[2], 10);
+        } else {
+          // Case A.3: Just verse number (e.g. 15)
+          const endVsMatch = endRef.match(/^(\d+)$/);
+          if (endVsMatch) {
+            endVs = parseInt(endVsMatch[1], 10);
+          } else {
+            return { verses: [], error: '끝 구절의 범위 지정이 올바르지 않습니다.' };
+          }
+        }
+      }
+
+      // Fetch range
+      const rangeVerses = getVersesRange(bookIdx, startCh, startVs, endCh, endVs);
+      if (rangeVerses.length === 0) {
+        return { verses: [], error: `해당 구절 범위를 찾을 수 없습니다: ${token}` };
+      }
+      results.push(...rangeVerses);
+    } 
+    // B. Check if chapter search: e.g. "Gen 1" or "창 1" (no colon)
+    else if (/^([1-3]?\s*[A-Za-z가-힣]+)\s*(\d+)$/.test(token)) {
+      const chMatch = token.match(/^([1-3]?\s*[A-Za-z가-힣]+)\s*(\d+)$/);
+      const bookIdx = lookupBookIdx(chMatch[1]);
+      if (bookIdx === -1) {
+        return { verses: [], error: `찾을 수 없는 성경책 이름입니다: "${chMatch[1]}"` };
+      }
+      
+      const ch = parseInt(chMatch[2], 10);
+      const bookKo = bibleKo[bookIdx];
+      const maxCh = bookKo.chapters.length;
+      if (ch < 1 || ch > maxCh) {
+        return { verses: [], error: `"${bookKo.koName}"은(는) 1장부터 ${maxCh}장까지 있습니다.` };
+      }
+      
+      const versesCount = bookKo.chapters[ch - 1].length;
+      const chVerses = getVersesRange(bookIdx, ch, 1, ch, versesCount);
+      results.push(...chVerses);
+    }
+    // C. Single verse search: e.g. "Gen 1:1"
+    else {
+      const singleMatch = token.match(/^([1-3]?\s*[A-Za-z가-힣]+)\s*(\d+)\s*:\s*(\d+)$/);
+      if (!singleMatch) {
+        return null; // Fall back to keyword if pattern mismatches
+      }
+
+      const bookIdx = lookupBookIdx(singleMatch[1]);
+      if (bookIdx === -1) {
+        return { verses: [], error: `찾을 수 없는 성경책 이름입니다: "${singleMatch[1]}"` };
+      }
+
+      const ch = parseInt(singleMatch[2], 10);
+      const vs = parseInt(singleMatch[3], 10);
+
+      const verse = getSingleVerse(bookIdx, ch, vs);
+      if (!verse) {
+        return { verses: [], error: `성경 구절이 존재하지 않습니다: ${token}` };
+      }
+      results.push(verse);
+    }
+  }
+
+  return { verses: results, error: null };
+}
+
+// Perform Keyword Search
+function searchKeyword(keyword) {
+  const cleanKeyword = keyword.toLowerCase().trim();
+  const isKo = hasKorean(cleanKeyword);
+  const results = [];
+
+  if (isKo) {
+    // Search in Korean Gaeyeok
+    for (let b = 0; b < bibleKo.length; b++) {
+      const bookKo = bibleKo[b];
+      const bookAsv = bibleAsv[b];
+      for (let c = 0; c < bookKo.chapters.length; c++) {
+        const chKo = bookKo.chapters[c];
+        const chAsv = bookAsv[c];
+        for (let v = 0; v < chKo.length; v++) {
+          const textKo = chKo[v] || '';
+          if (textKo.includes(cleanKeyword)) {
+            results.push({
+              bookIdx: b,
+              chapter: c + 1,
+              verse: v + 1,
+              textKo,
+              textEn: (chAsv && chAsv[v]) || ''
+            });
+          }
+        }
+      }
+    }
+  } else {
+    // Search in English ASV
+    for (let b = 0; b < bibleAsv.length; b++) {
+      const bookKo = bibleKo[b];
+      const bookAsv = bibleAsv[b];
+      for (let c = 0; c < bookAsv.chapters.length; c++) {
+        const chKo = bookKo.chapters[c];
+        const chAsv = bookAsv.chapters[c];
+        for (let v = 0; v < chAsv.length; v++) {
+          const textEn = chAsv[v] || '';
+          if (textEn.toLowerCase().includes(cleanKeyword)) {
+            results.push({
+              bookIdx: b,
+              chapter: c + 1,
+              verse: v + 1,
+              textKo: (chKo && chKo[v]) || '',
+              textEn
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return results;
+}
+
+// Handle Form Submission
+searchForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const query = searchInput.value.trim();
+  if (!query) return;
+
+  resultsEmpty.classList.add('hidden');
+  resultsContent.classList.add('hidden');
+  resultsLoading.classList.remove('hidden');
+
+  setTimeout(() => {
+    try {
+      // 1. Try Reference/Chapter parsing
+      const refParsed = parseBibleReference(query);
+      
+      if (refParsed !== null) {
+        resultsLoading.classList.add('hidden');
+        if (refParsed.error) {
+          showErrorState(refParsed.error);
+          return;
+        }
+        
+        currentSearchVerses = refParsed.verses;
+        renderSearchResults(currentSearchVerses, false);
+      } 
+      // 2. Otherwise execute Keyword Search
+      else {
+        const keywordResults = searchKeyword(query);
+        resultsLoading.classList.add('hidden');
+        currentSearchVerses = keywordResults;
+        renderSearchResults(keywordResults, true);
+      }
+    } catch (err) {
+      console.error(err);
+      resultsLoading.classList.add('hidden');
+      showErrorState('검색을 수행하는 중 내부 오류가 발생했습니다.');
+    }
+  }, 50); // Small timeout to allow loader spinner render
+});
+
+function showErrorState(msg) {
+  resultsList.innerHTML = '';
+  resultsCount.textContent = '검색 오류';
+  resultsCount.style.color = 'var(--accent-error)';
+  btnInsertAll.classList.add('hidden');
+  resultsContent.classList.remove('hidden');
+  
+  const errCard = document.createElement('div');
+  errCard.className = 'results-state-msg';
+  errCard.style.padding = '40px 0';
+  errCard.innerHTML = `
+    <i class="fa-solid fa-circle-exclamation" style="color: var(--accent-error);"></i>
+    <p>${msg}</p>
+  `;
+  resultsList.appendChild(errCard);
+}
+
+function renderSearchResults(verses, isKeywordSearch) {
+  resultsList.innerHTML = '';
+  resultsCount.style.color = 'var(--text-secondary)';
+  
+  if (verses.length === 0) {
+    resultsCount.textContent = '검색 결과: 0건';
+    btnInsertAll.classList.add('hidden');
+    resultsContent.classList.remove('hidden');
+    
+    const noResultCard = document.createElement('div');
+    noResultCard.className = 'results-state-msg';
+    noResultCard.style.padding = '40px 0';
+    noResultCard.innerHTML = `
+      <i class="fa-solid fa-folder-open"></i>
+      <p>검색 결과가 존재하지 않습니다. 검색어를 확인해 주세요.</p>
+    `;
+    resultsList.appendChild(noResultCard);
+    return;
+  }
+
+  // Cap layout display to 300 items to avoid UI lag, but show total count
+  const displayLimit = 300;
+  const countToDisplay = Math.min(verses.length, displayLimit);
+  
+  if (verses.length > displayLimit) {
+    resultsCount.textContent = `검색 결과: 총 ${verses.length}건 중 ${displayLimit}개 표시`;
+  } else {
+    resultsCount.textContent = `검색 결과: ${verses.length}건`;
+  }
+  
+  btnInsertAll.classList.remove('hidden');
+  resultsContent.classList.remove('hidden');
+
+  const fragment = document.createDocumentFragment();
+
+  for (let i = 0; i < countToDisplay; i++) {
+    const v = verses[i];
+    const meta = BIBLE_BOOKS[v.bookIdx];
+    const koRef = `${meta.koName} ${v.chapter}장 ${v.verse}절`;
+    const enRef = `${meta.name} ${v.chapter}:${v.verse}`;
+
+    const card = document.createElement('div');
+    card.className = 'verse-item';
+    card.innerHTML = `
+      <div class="verse-meta">
+        <div class="verse-title">
+          <span class="ko-title">${meta.koAbbrev} ${v.chapter}:${v.verse}</span>
+          <span class="en-title">${meta.abbrev} ${v.chapter}:${v.verse}</span>
+        </div>
+        <button class="btn-primary btn-sm btn-insert-single" data-index="${i}">
+          <i class="fa-solid fa-arrow-right"></i> 삽입
+        </button>
+      </div>
+      <div class="verse-text-ko">${v.textKo}</div>
+      <div class="verse-text-en">${v.textEn}</div>
+    `;
+
+    // Individual insert click listener
+    card.querySelector('.btn-insert-single').addEventListener('click', (e) => {
+      e.stopPropagation();
+      insertVerses([v]);
+    });
+
+    fragment.appendChild(card);
+  }
+
+  resultsList.appendChild(fragment);
+}
+
+// Clear Search Input
+btnClearSearch.addEventListener('click', () => {
+  searchInput.value = '';
+  btnClearSearch.style.display = 'none';
+  resultsContent.classList.add('hidden');
+  resultsEmpty.classList.remove('hidden');
+  searchInput.focus();
+  currentSearchVerses = [];
+});
+
+// Show/Hide Clear button on input change
+searchInput.addEventListener('input', () => {
+  btnClearSearch.style.display = searchInput.value ? 'block' : 'none';
+});
+
+// Search Help Toggle
+btnSearchHelp.addEventListener('click', () => {
+  searchHelpBox.classList.toggle('show');
+});
+
+// ==========================================================================
+// Note Editor Insertion Logic
+// ==========================================================================
+
+function insertVerses(versesToInsert) {
+  if (versesToInsert.length === 0) return;
+
+  const formattedText = versesToInsert.map(v => {
+    const meta = BIBLE_BOOKS[v.bookIdx];
+    const koRef = `${meta.koAbbrev} ${v.chapter}:${v.verse}`;
+    const enRef = `${meta.abbrev} ${v.chapter}:${v.verse}`;
+    // Format: "태초에 하나님이... (창 1:1) In the beginning... (Gen 1:1)"
+    return `${v.textKo} (${koRef}) ${v.textEn} (${enRef})`;
+  }).join('\n') + '\n'; // Add trailing newline for formatting separation
+
+  const startPos = noteEditor.selectionStart;
+  const endPos = noteEditor.selectionEnd;
+  const currentVal = noteEditor.value;
+
+  // Insert at current cursor
+  noteEditor.value = currentVal.substring(0, startPos) + formattedText + currentVal.substring(endPos);
+  
+  // Set new cursor position after the inserted text
+  const newPos = startPos + formattedText.length;
+  noteEditor.selectionStart = newPos;
+  noteEditor.selectionEnd = newPos;
+  
+  // Focus back to editor
+  noteEditor.focus();
+  
+  // Update stats
+  updateEditorStats();
+}
+
+// Insert All button
+btnInsertAll.addEventListener('click', () => {
+  if (currentSearchVerses.length === 0) return;
+  
+  // Warn if inserting a massive amount of verses
+  if (currentSearchVerses.length > 50) {
+    if (!confirm(`총 ${currentSearchVerses.length}개의 많은 성경 구절을 삽입하시겠습니까?`)) {
+      return;
+    }
+  }
+  insertVerses(currentSearchVerses);
+});
+
+// Update editor statistics
+function updateEditorStats() {
+  const content = noteEditor.value;
+  charCount.textContent = `${content.length}자`;
+}
+
+noteEditor.addEventListener('input', updateEditorStats);
+
+// ==========================================================================
+// Txt File Export Download
+// ==========================================================================
+
+btnExport.addEventListener('click', () => {
+  const content = noteEditor.value;
+  if (!content.trim()) {
+    alert('작성된 설교노트 내용이 없습니다. 내용을 입력한 후 내보내기를 진행해 주세요.');
+    noteEditor.focus();
+    return;
+  }
+
+  try {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
+    // YYYYMMDD formatting
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const filename = `sermon_notes_${yyyy}${mm}${dd}.txt`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+
+    // Cleanup
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('파일 내보내기 중 오류가 발생했습니다.');
+    console.error(err);
+  }
+});
+
+// ==========================================================================
+// Kickstart Application
+// ==========================================================================
+
+// Run auth check at startup
+checkAuth();

@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Local IDE configs
+.vscode/
+.idea/
+.gemini/
+.system_generated/
+*.log
+
+# Windows OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
