@@ -127,8 +127,8 @@ let currentSearchVerses = []; // Holds the list of verses from the last search
 let notes = []; // Array of sermon notes: { id, title, content, updatedAt }
 let currentNoteId = null; // Currently active note ID
 
-// Real-time Cloud Synchronization (jsonbin-zeta bucket)
-const CLOUD_BIN_URL = 'https://jsonbin-zeta.vercel.app/api/bins/bIBmgonfy6';
+// Real-time Cloud Synchronization (via Vercel API CORS proxy)
+const CLOUD_BIN_URL = '/api/notes';
 let cloudSyncTimeout = null; // Debounce timer for cloud save
 let isSyncing = false; // Sync indicator flag
 let isLocalEdit = false; // Flag to indicate if edits are made locally
