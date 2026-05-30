@@ -813,29 +813,33 @@ function loadNotes() {
       notes = [];
     }
   }
+  if (!notes) notes = [];
 
-  // Create a default initial note if none exists
-  if (!notes || notes.length === 0) {
-    notes = [
-      {
-        id: 'default-' + Date.now(),
-        title: '기본 설교노트',
-        content: '',
-        updatedAt: new Date().toISOString()
-      }
-    ];
-    saveNotes();
+  // Clean up legacy auto-generated default notes that have no content
+  const hadDefaultNote = notes.some(n =>
+    (n.title === '기본 설교노트' || n.id.startsWith('default-')) && n.content.trim() === ''
+  );
+  notes = notes.filter(n =>
+    !((n.title === '기본 설교노트' || n.id.startsWith('default-')) && n.content.trim() === '')
+  );
+  if (hadDefaultNote) {
+    localStorage.setItem('grace_notes', JSON.stringify(notes));
   }
 
-  // Restore the last active note, or default to the first one
+  // Restore the last active note if it still exists
   const lastActiveId = localStorage.getItem('grace_last_active_note');
   const activeNoteExists = notes.some(n => n.id === lastActiveId);
-  
-  if (lastActiveId && activeNoteExists) {
+
+  if (notes.length === 0) {
+    // No notes at all — show empty state
+    showEmptyState();
+  } else if (lastActiveId && activeNoteExists) {
     switchNote(lastActiveId);
   } else {
     switchNote(notes[0].id);
   }
+
+  renderNotesList();
 
   // Pull latest notes from cloud
   syncFromCloud();
@@ -846,9 +850,29 @@ function saveNotes() {
   renderNotesList();
 }
 
+// Show empty state in the editor area when there are no notes
+function showEmptyState() {
+  currentNoteId = null;
+  currentNoteTitle.textContent = '설교노트 작성';
+  noteEditor.value = '';
+  updateEditorStats();
+  renderNotesList();
+}
+
 function renderNotesList() {
   notesList.innerHTML = '';
-  
+
+  if (notes.length === 0) {
+    notesList.innerHTML = `
+      <div class="notes-empty-state">
+        <i class="fa-regular fa-folder-open"></i>
+        <p>노트가 없습니다</p>
+        <span>위의 <strong>+ 새 노트</strong> 버튼으로<br>첫 설교노트를 만들어 보세요.</span>
+      </div>
+    `;
+    return;
+  }
+
   // Sort notes by updatedAt in descending order (newest first)
   const sortedNotes = [...notes].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
@@ -879,6 +903,7 @@ function renderNotesList() {
     notesList.appendChild(noteEl);
   });
 }
+
 
 function switchNote(noteId) {
   currentNoteId = noteId;
@@ -961,21 +986,15 @@ function deleteActiveNote() {
   // Filter out the deleted note
   notes = notes.filter(n => n.id !== currentNoteId);
 
-  // If all notes are deleted, create a default empty note
+  saveNotes();
+
   if (notes.length === 0) {
-    notes = [
-      {
-        id: 'default-' + Date.now(),
-        title: '기본 설교노트',
-        content: '',
-        updatedAt: new Date().toISOString()
-      }
-    ];
+    // No notes left — show empty state
+    showEmptyState();
+  } else {
+    switchNote(notes[0].id);
   }
 
-  saveNotes();
-  switchNote(notes[0].id);
-  
   // Sync immediately
   syncToCloud();
   showToast('노트가 삭제되었습니다.', 'success');
@@ -992,22 +1011,12 @@ function deleteAllNotes() {
     return;
   }
 
-  // Clear all notes and create a fresh default note
-  notes = [
-    {
-      id: 'default-' + Date.now(),
-      title: '기본 설교노트',
-      content: '',
-      updatedAt: new Date().toISOString()
-    }
-  ];
-  currentNoteId = notes[0].id;
+  // Clear all notes
+  notes = [];
+  currentNoteId = null;
 
   saveNotes();
-  currentNoteTitle.textContent = notes[0].title;
-  noteEditor.value = '';
-  updateEditorStats();
-  renderNotesList();
+  showEmptyState();
 
   // Sync to cloud
   syncToCloud();

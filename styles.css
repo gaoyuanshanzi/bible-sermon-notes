@@ -1009,6 +1009,40 @@ body {
   gap: 10px;
 }
 
+.notes-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.notes-empty-state i {
+  font-size: 2.2rem;
+  color: var(--border-color);
+  margin-bottom: 4px;
+}
+
+.notes-empty-state p {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.notes-empty-state span {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.notes-empty-state strong {
+  color: var(--accent-primary);
+}
+
+
 .sidebar-footer {
   padding: 12px 16px;
   border-top: 1px solid var(--border-color);
