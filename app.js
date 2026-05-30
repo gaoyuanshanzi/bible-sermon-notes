@@ -186,6 +186,7 @@ const btnCopyNote = document.getElementById('btn-copy-note');
 const notesSidebar = document.getElementById('notes-sidebar');
 const notesList = document.getElementById('notes-list');
 const btnNewNote = document.getElementById('btn-new-note');
+const btnCloseLibrary = document.getElementById('btn-close-library');
 const toastContainer = document.getElementById('toast-container');
 
 // ==========================================================================
@@ -891,6 +892,14 @@ function switchNote(noteId) {
 
   // Update active state in list
   renderNotesList();
+
+  // On mobile: close the library overlay after selecting a note
+  if (window.matchMedia('(max-width: 1023px)').matches) {
+    notesSidebar.classList.add('hidden');
+    if (btnToggleLibrary) {
+      btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> 라이브러리`;
+    }
+  }
 }
 
 function createNewNote() {
@@ -1237,25 +1246,51 @@ function setupPremiumEventListeners() {
     }, 1000);
   });
 
+  // Helper: check if we are on a mobile-sized screen
+  function isMobile() {
+    return window.matchMedia('(max-width: 1023px)').matches;
+  }
+
+  // Helper: show / hide the close button inside the sidebar
+  function updateCloseLibraryBtn() {
+    if (btnCloseLibrary) {
+      btnCloseLibrary.style.display = isMobile() ? 'inline-flex' : 'none';
+    }
+  }
+
   // Library Panel Toggle
   btnToggleLibrary.addEventListener('click', () => {
     notesSidebar.classList.toggle('hidden');
-    
-    // Save state of library toggle
+
+    // Save state of library toggle (only persist open state on desktop)
     const isVisible = !notesSidebar.classList.contains('hidden');
-    localStorage.setItem('grace_library_visible', isVisible);
-    
+    if (!isMobile()) {
+      localStorage.setItem('grace_library_visible', isVisible);
+    }
+
     // Toggle active icon or label
-    btnToggleLibrary.innerHTML = isVisible 
+    btnToggleLibrary.innerHTML = isVisible
       ? `<i class="fa-solid fa-folder-closed"></i> 라이브러리`
       : `<i class="fa-solid fa-folder-open"></i> 라이브러리`;
+
+    // Show/hide close button on mobile
+    updateCloseLibraryBtn();
   });
 
-  // Load past library toggle state
+  // Close Library button (mobile only)
+  if (btnCloseLibrary) {
+    btnCloseLibrary.addEventListener('click', () => {
+      notesSidebar.classList.add('hidden');
+      btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> 라이브러리`;
+    });
+  }
+
+  // Load past library toggle state (desktop only)
   const libraryVisible = localStorage.getItem('grace_library_visible') === 'true';
-  if (libraryVisible) {
+  if (libraryVisible && !isMobile()) {
     notesSidebar.classList.remove('hidden');
     btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-closed"></i> 라이브러리`;
+    updateCloseLibraryBtn();
   }
 
   // Bible Catalog Toggle

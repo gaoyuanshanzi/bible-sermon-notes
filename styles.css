@@ -1146,6 +1146,86 @@ body {
   }
 }
 
+/* ==========================================================================
+   Mobile: Notes Sidebar as Full-Screen Overlay
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  /* On mobile, show the sidebar as a fixed overlay over the whole screen */
+  .notes-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 1000;
+    background-color: var(--bg-primary) !important;
+    border-left: none !important;
+    animation: mobileSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Ensure note items display correctly on mobile */
+  .note-item {
+    padding: 14px 16px !important;
+    min-height: unset !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+  }
+
+  .note-item-title {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    white-space: normal !important;    /* Allow wrapping on mobile */
+    overflow: visible !important;
+    text-overflow: unset !important;
+    padding-right: 0 !important;
+    color: var(--text-primary) !important;
+    align-self: flex-start;
+  }
+
+  .note-item-date {
+    font-size: 0.8rem !important;
+    margin-top: 4px;
+    align-self: flex-start;
+  }
+
+  /* Larger notes list padding on mobile */
+  .notes-list {
+    padding: 20px 16px !important;
+    gap: 12px !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Mobile sidebar header */
+  .sidebar-header {
+    padding: 20px 20px 16px !important;
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-primary);
+    z-index: 1;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .sidebar-header h3 {
+    font-size: 1.1rem !important;
+  }
+}
+
+@keyframes mobileSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes toastSlideIn {
   from {
     transform: translateX(100%) translateY(0);

@@ -217,9 +217,14 @@
         <aside id="notes-sidebar" class="notes-sidebar hidden">
           <div class="sidebar-header">
             <h3><i class="fa-solid fa-folder-closed"></i> 노트 목록</h3>
-            <button id="btn-new-note" class="btn-primary btn-sm" title="새 노트 작성">
-              <i class="fa-solid fa-plus"></i> 새 노트
-            </button>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button id="btn-new-note" class="btn-primary btn-sm" title="새 노트 작성">
+                <i class="fa-solid fa-plus"></i> 새 노트
+              </button>
+              <button id="btn-close-library" class="btn-icon" title="닫기" style="display:none;">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
           </div>
           <div id="notes-list" class="notes-list">
             <!-- Dynamically rendered list of notes -->
