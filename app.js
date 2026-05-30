@@ -163,6 +163,7 @@ const btnExport = document.getElementById('btn-export');
 const btnLogout = document.getElementById('btn-logout');
 
 // New Premium Feature DOM Elements
+const btnSync = document.getElementById('btn-sync');
 const btnToggleLibrary = document.getElementById('btn-toggle-library');
 const btnBibleCatalog = document.getElementById('btn-bible-catalog');
 const bibleCatalog = document.getElementById('bible-catalog');
@@ -1015,7 +1016,30 @@ function getMaxTimestamp(notesList) {
   return maxTime;
 }
 
-async function syncFromCloud() {
+function mergeNotes(localList, cloudList) {
+  const mergedMap = new Map();
+  
+  const addNoteToMerge = (note) => {
+    if (!note || !note.id) return;
+    const existing = mergedMap.get(note.id);
+    if (!existing) {
+      mergedMap.set(note.id, note);
+    } else {
+      const existingTime = existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
+      const incomingTime = note.updatedAt ? new Date(note.updatedAt).getTime() : 0;
+      if (incomingTime > existingTime) {
+        mergedMap.set(note.id, note);
+      }
+    }
+  };
+
+  localList.forEach(addNoteToMerge);
+  cloudList.forEach(addNoteToMerge);
+
+  return Array.from(mergedMap.values());
+}
+
+async function syncFromCloud(showFeedback = false) {
   if (isSyncing) return;
   isSyncing = true;
 
@@ -1026,55 +1050,65 @@ async function syncFromCloud() {
     const data = await res.json();
     if (data && data.notes && Array.isArray(data.notes)) {
       const cloudNotes = data.notes;
-      const cloudNotesStr = JSON.stringify(cloudNotes);
-      const localNotesStr = JSON.stringify(notes);
       
-      if (cloudNotesStr !== localNotesStr) {
-        // Compare maximum modified timestamps
-        const cloudMaxTime = getMaxTimestamp(cloudNotes);
-        const localMaxTime = getMaxTimestamp(notes);
+      // Perform a smart merge of local and cloud notes
+      const merged = mergeNotes(notes, cloudNotes);
+      const mergedStr = JSON.stringify(merged);
+      const localStr = JSON.stringify(notes);
+      const cloudStr = JSON.stringify(cloudNotes);
+      
+      let didChange = false;
+
+      // 1. If cloud is behind the merged state, push merged notes to cloud
+      if (cloudStr !== mergedStr) {
+        notes = merged;
+        localStorage.setItem('grace_notes', JSON.stringify(notes));
+        await syncToCloud();
+        didChange = true;
+      }
+      
+      // 2. If local is behind the merged state, update local notes and refresh UI
+      if (localStr !== mergedStr) {
+        notes = merged;
+        localStorage.setItem('grace_notes', JSON.stringify(notes));
         
-        // Detect if cloud only contains the default placeholder note
-        const isCloudDefaultOnly = cloudNotes.length === 1 && 
-          (cloudNotes[0].id.startsWith('default') || cloudNotes[0].title === '기본 설교노트');
-        const hasLocalNotes = notes.length > 0 && 
-          !(notes.length === 1 && notes[0].id.startsWith('default') && notes[0].content === '');
-
-        // If local timestamp is newer, or if cloud contains only default placeholder and local has content
-        if (localMaxTime > cloudMaxTime || (isCloudDefaultOnly && hasLocalNotes)) {
-          // Push local notes to cloud
-          await syncToCloud();
-          showToast('로컬 노트를 클라우드에 동기화했습니다.', 'success');
-        } else {
-          // Overwrite local notes with cloud notes
-          notes = cloudNotes;
-          localStorage.setItem('grace_notes', JSON.stringify(notes));
-          
-          // Ensure current active note still exists
-          const activeNoteExists = notes.some(n => n.id === currentNoteId);
-          if (!activeNoteExists && notes.length > 0) {
-            currentNoteId = notes[0].id;
-          }
-
-          // Update Editor UI
-          const activeNote = notes.find(n => n.id === currentNoteId);
-          if (activeNote) {
-            currentNoteTitle.textContent = activeNote.title;
-            
-            // Only update editor if it is not currently focused by the user to avoid cursor jumps
-            if (document.activeElement !== noteEditor) {
-              noteEditor.value = activeNote.content;
-              updateEditorStats();
-            }
-          }
-          
-          renderNotesList();
-          showToast('클라우드 노트와 동기화되었습니다.', 'success');
+        // Ensure current active note still exists
+        const activeNoteExists = notes.some(n => n.id === currentNoteId);
+        if (!activeNoteExists && notes.length > 0) {
+          currentNoteId = notes[0].id;
         }
+
+        // Update Editor UI
+        const activeNote = notes.find(n => n.id === currentNoteId);
+        if (activeNote) {
+          currentNoteTitle.textContent = activeNote.title;
+          
+          // Only update editor if it is not currently focused by the user to avoid cursor jumps
+          if (document.activeElement !== noteEditor) {
+            noteEditor.value = activeNote.content;
+            updateEditorStats();
+          }
+        }
+        
+        renderNotesList();
+        didChange = true;
+      }
+      
+      if (showFeedback) {
+        if (didChange) {
+          showToast('동기화 완료: 최신 데이터를 주고받았습니다.', 'success');
+        } else {
+          showToast('동기화 완료: 이미 최신 상태입니다.', 'success');
+        }
+      } else if (didChange) {
+        showToast('클라우드와 실시간 동기화되었습니다.', 'success');
       }
     }
   } catch (err) {
     console.error('Failed to sync from cloud:', err);
+    if (showFeedback) {
+      showToast('동기화 중 오류가 발생했습니다.', 'error');
+    }
   } finally {
     isSyncing = false;
   }
@@ -1187,6 +1221,22 @@ function openCatalogChapters(bookIdx) {
 // ==========================================================================
 
 function setupPremiumEventListeners() {
+  // Cloud Sync Manual Button Trigger
+  btnSync.addEventListener('click', async () => {
+    const icon = btnSync.querySelector('i');
+    if (icon) icon.classList.add('fa-spin');
+    
+    showToast('동기화를 진행하는 중입니다...', 'info');
+    
+    // Explicit manual sync with toast notifications
+    await syncFromCloud(true);
+    
+    // Stop spinning after a brief natural-feeling delay
+    setTimeout(() => {
+      if (icon) icon.classList.remove('fa-spin');
+    }, 1000);
+  });
+
   // Library Panel Toggle
   btnToggleLibrary.addEventListener('click', () => {
     notesSidebar.classList.toggle('hidden');

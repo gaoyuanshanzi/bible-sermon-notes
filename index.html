@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Main Styles -->
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260530_v4">
 </head>
 <body>
   <!-- Login Overlay Screen -->
@@ -64,6 +64,9 @@
       </div>
       <div class="header-right">
         <span class="user-badge"><i class="fa-solid fa-user-shield"></i> 관리자(admin)</span>
+        <button id="btn-sync" class="btn-secondary" title="클라우드 동기화 (업로드/다운로드)">
+          <i class="fa-solid fa-rotate"></i> 동기화
+        </button>
         <button id="btn-toggle-library" class="btn-secondary" title="노트 라이브러리 열기/닫기">
           <i class="fa-solid fa-folder-open"></i> 라이브러리
         </button>
@@ -230,6 +233,6 @@
   <div id="toast-container" class="toast-container"></div>
 
   <!-- Javascript -->
-  <script src="app.js?v=20260530_v3"></script>
+  <script src="app.js?v=20260530_v4"></script>
 </body>
 </html>
