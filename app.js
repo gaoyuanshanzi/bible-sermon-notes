@@ -121,15 +121,18 @@ Object.entries(customAbbrevs).forEach(([key, idx]) => {
 // Application Variables & State
 // ==========================================================================
 
-// ==========================================================================
-// Application Variables & State
-// ==========================================================================
-
 let bibleKo = null;
 let bibleAsv = null;
 let currentSearchVerses = []; // Holds the list of verses from the last search
 let notes = []; // Array of sermon notes: { id, title, content, updatedAt }
 let currentNoteId = null; // Currently active note ID
+
+// Real-time Cloud Synchronization (jsonbin-zeta bucket)
+const CLOUD_BIN_URL = 'https://jsonbin-zeta.vercel.app/api/bins/bIBmgonfy6';
+let cloudSyncTimeout = null; // Debounce timer for cloud save
+let isSyncing = false; // Sync indicator flag
+let isLocalEdit = false; // Flag to indicate if edits are made locally
+let lastEditTime = 0; // Timestamp of the last local edit
 
 // DOM Elements
 const loginOverlay = document.getElementById('login-overlay');
@@ -830,6 +833,9 @@ function loadNotes() {
   } else {
     switchNote(notes[0].id);
   }
+
+  // Pull latest notes from cloud
+  syncFromCloud();
 }
 
 function saveNotes() {
@@ -904,6 +910,8 @@ function createNewNote() {
   saveNotes();
   switchNote(newNote.id);
   
+  // Sync immediately
+  syncToCloud();
   showToast(`"${newNote.title}"를 생성했습니다.`, 'success');
 }
 
@@ -926,6 +934,8 @@ function renameActiveNote() {
   saveNotes();
   switchNote(activeNote.id);
   
+  // Sync immediately
+  syncToCloud();
   showToast('노트 제목이 변경되었습니다.', 'success');
 }
 
@@ -955,6 +965,8 @@ function deleteActiveNote() {
   saveNotes();
   switchNote(notes[0].id);
   
+  // Sync immediately
+  syncToCloud();
   showToast('노트가 삭제되었습니다.', 'success');
 }
 
@@ -981,7 +993,99 @@ function autoSaveCurrentNote() {
         dateEl.innerHTML = `<i class="fa-regular fa-clock"></i> ${yyyy}-${mm}-${dd} ${hh}:${min}`;
       }
     }
+
+    // Trigger debounced cloud save
+    triggerDebouncedCloudSync();
   }
+}
+
+// ==========================================================================
+// Real-time Cloud Synchronization Operations (REST Client)
+// ==========================================================================
+
+async function syncFromCloud() {
+  if (isSyncing) return;
+  isSyncing = true;
+
+  try {
+    const res = await fetch(CLOUD_BIN_URL);
+    if (!res.ok) throw new Error('Cloud fetch failed');
+    
+    const data = await res.json();
+    if (data && data.notes && Array.isArray(data.notes)) {
+      const cloudNotesStr = JSON.stringify(data.notes);
+      const localNotesStr = JSON.stringify(notes);
+      
+      if (cloudNotesStr !== localNotesStr) {
+        // If there are very recent local edits, push local to cloud instead
+        const timeSinceLastEdit = Date.now() - lastEditTime;
+        if (isLocalEdit && timeSinceLastEdit < 6000) {
+          syncToCloud();
+          return;
+        }
+
+        // Otherwise overwrite local
+        notes = data.notes;
+        localStorage.setItem('grace_notes', JSON.stringify(notes));
+        
+        // Ensure current active note still exists
+        const activeNoteExists = notes.some(n => n.id === currentNoteId);
+        if (!activeNoteExists && notes.length > 0) {
+          currentNoteId = notes[0].id;
+        }
+
+        // Update Editor UI
+        const activeNote = notes.find(n => n.id === currentNoteId);
+        if (activeNote) {
+          currentNoteTitle.textContent = activeNote.title;
+          
+          // Only update editor if it is not currently focused by the user to avoid cursor jumps
+          if (document.activeElement !== noteEditor) {
+            noteEditor.value = activeNote.content;
+            updateEditorStats();
+          }
+        }
+        
+        renderNotesList();
+        showToast('클라우드 노트와 동기화되었습니다.', 'success');
+      }
+    }
+  } catch (err) {
+    console.error('Failed to sync from cloud:', err);
+  } finally {
+    isSyncing = false;
+  }
+}
+
+async function syncToCloud() {
+  try {
+    const res = await fetch(CLOUD_BIN_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ notes })
+    });
+    if (!res.ok) throw new Error('Cloud push failed');
+    
+    isLocalEdit = false;
+    console.log('Successfully pushed notes to cloud.');
+  } catch (err) {
+    console.error('Failed to sync to cloud:', err);
+  }
+}
+
+function triggerDebouncedCloudSync() {
+  isLocalEdit = true;
+  lastEditTime = Date.now();
+  
+  if (cloudSyncTimeout) {
+    clearTimeout(cloudSyncTimeout);
+  }
+  
+  cloudSyncTimeout = setTimeout(() => {
+    syncToCloud();
+  }, 1500); // 1.5 seconds of inactivity before pushing to cloud
 }
 
 // Utility function to escape HTML characters
@@ -1160,3 +1264,13 @@ function showToast(message, type = 'info') {
 
 // Run auth check at startup
 checkAuth();
+
+// Start background real-time cloud synchronization polling
+setInterval(() => {
+  const isAuth = sessionStorage.getItem('authenticated') === 'true';
+  const timeSinceLastEdit = Date.now() - lastEditTime;
+  
+  if (isAuth && bibleKo && bibleAsv && timeSinceLastEdit > 6000) {
+    syncFromCloud();
+  }
+}, 10000); // Poll every 10 seconds
