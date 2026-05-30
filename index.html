@@ -64,6 +64,9 @@
       </div>
       <div class="header-right">
         <span class="user-badge"><i class="fa-solid fa-user-shield"></i> 관리자(admin)</span>
+        <button id="btn-delete-all-notes" class="btn-delete-all-header" title="모든 설교 노트 삭제">
+          <i class="fa-solid fa-trash"></i> 전체 삭제
+        </button>
         <button id="btn-sync" class="btn-secondary" title="클라우드 동기화 (업로드/다운로드)">
           <i class="fa-solid fa-rotate"></i> 동기화
         </button>
@@ -228,11 +231,6 @@
           </div>
           <div id="notes-list" class="notes-list">
             <!-- Dynamically rendered list of notes -->
-          </div>
-          <div class="sidebar-footer">
-            <button id="btn-delete-all-notes" class="btn-delete-all">
-              <i class="fa-solid fa-trash"></i> 모든 설교 노트 삭제
-            </button>
           </div>
         </aside>
       </div>

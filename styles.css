@@ -401,6 +401,27 @@ body {
   color: var(--accent-error);
 }
 
+.btn-delete-all-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #fca5a5;
+  background: transparent;
+  color: var(--accent-error);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-delete-all-header:hover {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: var(--accent-error);
+}
+
 /* ==========================================================================
    Workspace Scrollable Layout
    ========================================================================== */
