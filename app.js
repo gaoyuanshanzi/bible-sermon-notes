@@ -1097,8 +1097,17 @@ async function syncFromCloud(showFeedback = false) {
   isSyncing = true;
 
   try {
-    const res = await fetch(CLOUD_BIN_URL);
-    if (!res.ok) throw new Error('Cloud fetch failed');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    let res;
+    try {
+      res = await fetch(CLOUD_BIN_URL, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!res.ok) throw new Error(`서버 응답 오류 (${res.status})`);
     
     const data = await res.json();
     if (data && data.notes && Array.isArray(data.notes)) {
@@ -1156,11 +1165,19 @@ async function syncFromCloud(showFeedback = false) {
       } else if (didChange) {
         showToast('클라우드와 실시간 동기화되었습니다.', 'success');
       }
+    } else if (showFeedback) {
+      // Server returned empty/invalid data — push local data up
+      await syncToCloud();
+      showToast('동기화 완료: 로컬 데이터를 클라우드에 저장했습니다.', 'success');
     }
   } catch (err) {
-    console.error('Failed to sync from cloud:', err);
+    console.warn('Cloud sync unavailable:', err.message);
     if (showFeedback) {
-      showToast('동기화 중 오류가 발생했습니다.', 'error');
+      if (err.name === 'AbortError') {
+        showToast('동기화 시간 초과. 네트워크 연결을 확인해 주세요.', 'error');
+      } else {
+        showToast('클라우드 연결을 일시적으로 사용할 수 없습니다. 로컬에 저장됩니다.', 'error');
+      }
     }
   } finally {
     isSyncing = false;
@@ -1169,19 +1186,28 @@ async function syncFromCloud(showFeedback = false) {
 
 async function syncToCloud() {
   try {
-    const res = await fetch(CLOUD_BIN_URL, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ notes })
-    });
-    if (!res.ok) throw new Error('Cloud push failed');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    let res;
+    try {
+      res = await fetch(CLOUD_BIN_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!res.ok) throw new Error(`Cloud push failed: ${res.status}`);
     
     isLocalEdit = false;
     console.log('Successfully pushed notes to cloud.');
   } catch (err) {
-    console.error('Failed to sync to cloud:', err);
+    console.warn('Cloud push unavailable (data saved locally):', err.message);
+    // Do NOT throw — local data is already saved, cloud is best-effort
   }
 }
 
