@@ -437,14 +437,30 @@ body {
   display: flex;
   height: 100%;
   width: 100%;
-  min-width: 1000px; /* Forces side-by-side columns on mobile */
+  min-width: 760px; /* 좌패널(420) + 우패널(min 60) + 사이드바(280) */
 }
 
-/* Desktop override to fit within screen */
+/* 데스크탑: 화면에 꼭 맞게 */
 @media (min-width: 1024px) {
   .workspace-inner {
     min-width: 100%;
     width: 100%;
+  }
+}
+
+/* 모바일 좌우 스크롤 힌트: 스크롤바 항상 표시 */
+@media (max-width: 1023px) {
+  .workspace-wrapper {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  .left-panel,
+  .right-panel {
+    scroll-snap-align: start;
+    min-width: 320px;
+  }
+  .notes-sidebar {
+    scroll-snap-align: start;
   }
 }
 

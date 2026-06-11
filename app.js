@@ -925,6 +925,11 @@ function switchNote(noteId) {
     if (btnToggleLibrary) {
       btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> 라이브러리`;
     }
+    // 선택 후 메인 에디터(왼쪽)로 자동 스크롤 복귀
+    const wrapper = document.querySelector('.workspace-wrapper');
+    if (wrapper) {
+      setTimeout(() => wrapper.scrollTo({ left: 0, behavior: 'smooth' }), 50);
+    }
   }
 }
 
@@ -1345,6 +1350,20 @@ function setupPremiumEventListeners() {
 
     // Show/hide close button on mobile
     updateCloseLibraryBtn();
+
+    // 모바일: 사이드바가 열리면 자동으로 오른쪽 끝으로 스크롤하여 노트목록 표시
+    if (isMobile()) {
+      const wrapper = document.querySelector('.workspace-wrapper');
+      if (wrapper) {
+        setTimeout(() => {
+          if (isVisible) {
+            wrapper.scrollTo({ left: wrapper.scrollWidth, behavior: 'smooth' });
+          } else {
+            wrapper.scrollTo({ left: 0, behavior: 'smooth' });
+          }
+        }, 50);
+      }
+    }
   });
 
   // Close Library button (mobile only)
@@ -1352,6 +1371,11 @@ function setupPremiumEventListeners() {
     btnCloseLibrary.addEventListener('click', () => {
       notesSidebar.classList.add('hidden');
       btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> 라이브러리`;
+      // 모바일: 닫으면 왼쪽(메인 화면)으로 자동 스크롤 복귀
+      const wrapper = document.querySelector('.workspace-wrapper');
+      if (wrapper) {
+        wrapper.scrollTo({ left: 0, behavior: 'smooth' });
+      }
     });
   }
 
