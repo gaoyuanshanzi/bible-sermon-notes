@@ -921,15 +921,17 @@ function switchNote(noteId) {
 
   // On mobile: close the library overlay after selecting a note
   if (window.matchMedia('(max-width: 1023px)').matches) {
-    notesSidebar.classList.add('hidden');
-    if (btnToggleLibrary) {
-      btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> <span class="btn-text">라이브러리</span>`;
+    const rightPanel = document.querySelector('.right-panel');
+    if (rightPanel) {
+      rightPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
     }
-    // 선택 후 메인 에디터(왼쪽)로 자동 스크롤 복귀
-    const wrapper = document.querySelector('.workspace-wrapper');
-    if (wrapper) {
-      setTimeout(() => wrapper.scrollTo({ left: 0, behavior: 'smooth' }), 50);
-    }
+    setTimeout(() => {
+      notesSidebar.classList.add('hidden');
+      if (btnToggleLibrary) {
+        btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> <span class="btn-text">라이브러리</span>`;
+      }
+      updateCloseLibraryBtn();
+    }, 400);
   }
 }
 
@@ -1335,47 +1337,53 @@ function setupPremiumEventListeners() {
 
   // Library Panel Toggle
   btnToggleLibrary.addEventListener('click', () => {
-    notesSidebar.classList.toggle('hidden');
-
-    // Save state of library toggle (only persist open state on desktop)
     const isVisible = !notesSidebar.classList.contains('hidden');
-    if (!isMobile()) {
-      localStorage.setItem('grace_library_visible', isVisible);
-    }
 
-    // Toggle active icon or label
-    btnToggleLibrary.innerHTML = isVisible
-      ? `<i class="fa-solid fa-folder-closed"></i> <span class="btn-text">라이브러리</span>`
-      : `<i class="fa-solid fa-folder-open"></i> <span class="btn-text">라이브러리</span>`;
-
-    // Show/hide close button on mobile
-    updateCloseLibraryBtn();
-
-    // 모바일: 사이드바가 열리면 자동으로 오른쪽 끝으로 스크롤하여 노트목록 표시
     if (isMobile()) {
-      const wrapper = document.querySelector('.workspace-wrapper');
-      if (wrapper) {
+      if (isVisible) {
+        // 모바일: 열려있는 경우 에디터 패널로 먼저 스크롤 후 숨김 처리
+        const rightPanel = document.querySelector('.right-panel');
+        if (rightPanel) {
+          rightPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        }
         setTimeout(() => {
-          if (isVisible) {
-            wrapper.scrollTo({ left: wrapper.scrollWidth, behavior: 'smooth' });
-          } else {
-            wrapper.scrollTo({ left: 0, behavior: 'smooth' });
-          }
+          notesSidebar.classList.add('hidden');
+          btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> <span class="btn-text">라이브러리</span>`;
+          updateCloseLibraryBtn();
+        }, 400);
+      } else {
+        // 모바일: 닫혀있는 경우 먼저 표시하고 사이드바 패널로 스크롤
+        notesSidebar.classList.remove('hidden');
+        btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-closed"></i> <span class="btn-text">라이브러리</span>`;
+        updateCloseLibraryBtn();
+        setTimeout(() => {
+          notesSidebar.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
         }, 50);
       }
+    } else {
+      // 데스크탑: 일반 토글
+      notesSidebar.classList.toggle('hidden');
+      const nowVisible = !notesSidebar.classList.contains('hidden');
+      localStorage.setItem('grace_library_visible', nowVisible);
+      btnToggleLibrary.innerHTML = nowVisible
+        ? `<i class="fa-solid fa-folder-closed"></i> <span class="btn-text">라이브러리</span>`
+        : `<i class="fa-solid fa-folder-open"></i> <span class="btn-text">라이브러리</span>`;
+      updateCloseLibraryBtn();
     }
   });
 
   // Close Library button (mobile only)
   if (btnCloseLibrary) {
     btnCloseLibrary.addEventListener('click', () => {
-      notesSidebar.classList.add('hidden');
-      btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> <span class="btn-text">라이브러리</span>`;
-      // 모바일: 닫으면 왼쪽(메인 화면)으로 자동 스크롤 복귀
-      const wrapper = document.querySelector('.workspace-wrapper');
-      if (wrapper) {
-        wrapper.scrollTo({ left: 0, behavior: 'smooth' });
+      const rightPanel = document.querySelector('.right-panel');
+      if (rightPanel) {
+        rightPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
       }
+      setTimeout(() => {
+        notesSidebar.classList.add('hidden');
+        btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> <span class="btn-text">라이브러리</span>`;
+        updateCloseLibraryBtn();
+      }, 400);
     });
   }
 

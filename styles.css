@@ -1275,6 +1275,7 @@ body {
   }
   .header-right {
     gap: 8px !important;
+    flex-shrink: 0 !important;
   }
   .user-badge {
     display: none !important;
@@ -1292,6 +1293,10 @@ body {
     border-radius: 50% !important;
     box-shadow: none !important;
     font-size: 1rem !important;
+    flex-shrink: 0 !important;
+  }
+  .header-right button * {
+    pointer-events: none !important;
   }
 
   /* On mobile, show the sidebar as a regular 100vw flex column in horizontal scroll */
