@@ -1091,6 +1091,7 @@ body {
   gap: 6px;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0; /* 부모 flex 컨테이너에서 압축되지 않도록 */
 }
 
 .note-item:hover {
