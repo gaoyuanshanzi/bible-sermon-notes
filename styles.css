@@ -450,6 +450,10 @@ body {
 
 /* 모바일 좌우 스크롤 힌트: 스크롤바 항상 표시 */
 @media (max-width: 1023px) {
+  .workspace-inner {
+    min-width: unset !important;
+    width: auto !important;
+  }
   .workspace-wrapper {
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
@@ -457,7 +461,9 @@ body {
   .left-panel,
   .right-panel {
     scroll-snap-align: start;
-    min-width: 320px;
+    width: 100vw !important;
+    min-width: 100vw !important;
+    flex-shrink: 0 !important;
   }
   .notes-sidebar {
     scroll-snap-align: start;
@@ -1259,19 +1265,49 @@ body {
    ========================================================================== */
 
 @media (max-width: 1023px) {
-  /* On mobile, show the sidebar as a fixed overlay over the whole screen */
+  /* Mobile header styling */
+  .main-header {
+    padding: 0 12px !important;
+    height: 60px !important;
+  }
+  .header-logo h1 {
+    font-size: 1.1rem !important;
+  }
+  .header-right {
+    gap: 8px !important;
+  }
+  .user-badge {
+    display: none !important;
+  }
+  .btn-text {
+    display: none !important;
+  }
+  .header-right button {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    border-radius: 50% !important;
+    box-shadow: none !important;
+    font-size: 1rem !important;
+  }
+
+  /* On mobile, show the sidebar as a regular 100vw flex column in horizontal scroll */
   .notes-sidebar {
-    position: fixed !important;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100% !important;
+    position: relative !important;
+    top: unset;
+    left: unset;
+    right: unset;
+    bottom: unset;
+    width: 100vw !important;
+    min-width: 100vw !important;
     height: 100% !important;
-    z-index: 1000;
+    z-index: unset;
     background-color: var(--bg-primary) !important;
-    border-left: none !important;
-    animation: mobileSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border-left: 1px solid var(--border-color) !important;
+    animation: none !important;
   }
 
   /* Ensure note items display correctly on mobile */

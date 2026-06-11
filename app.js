@@ -923,7 +923,7 @@ function switchNote(noteId) {
   if (window.matchMedia('(max-width: 1023px)').matches) {
     notesSidebar.classList.add('hidden');
     if (btnToggleLibrary) {
-      btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> 라이브러리`;
+      btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> <span class="btn-text">라이브러리</span>`;
     }
     // 선택 후 메인 에디터(왼쪽)로 자동 스크롤 복귀
     const wrapper = document.querySelector('.workspace-wrapper');
@@ -1345,8 +1345,8 @@ function setupPremiumEventListeners() {
 
     // Toggle active icon or label
     btnToggleLibrary.innerHTML = isVisible
-      ? `<i class="fa-solid fa-folder-closed"></i> 라이브러리`
-      : `<i class="fa-solid fa-folder-open"></i> 라이브러리`;
+      ? `<i class="fa-solid fa-folder-closed"></i> <span class="btn-text">라이브러리</span>`
+      : `<i class="fa-solid fa-folder-open"></i> <span class="btn-text">라이브러리</span>`;
 
     // Show/hide close button on mobile
     updateCloseLibraryBtn();
@@ -1370,7 +1370,7 @@ function setupPremiumEventListeners() {
   if (btnCloseLibrary) {
     btnCloseLibrary.addEventListener('click', () => {
       notesSidebar.classList.add('hidden');
-      btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> 라이브러리`;
+      btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-open"></i> <span class="btn-text">라이브러리</span>`;
       // 모바일: 닫으면 왼쪽(메인 화면)으로 자동 스크롤 복귀
       const wrapper = document.querySelector('.workspace-wrapper');
       if (wrapper) {
@@ -1383,7 +1383,7 @@ function setupPremiumEventListeners() {
   const libraryVisible = localStorage.getItem('grace_library_visible') === 'true';
   if (libraryVisible && !isMobile()) {
     notesSidebar.classList.remove('hidden');
-    btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-closed"></i> 라이브러리`;
+    btnToggleLibrary.innerHTML = `<i class="fa-solid fa-folder-closed"></i> <span class="btn-text">라이브러리</span>`;
     updateCloseLibraryBtn();
   }
 
