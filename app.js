@@ -126,6 +126,7 @@ let bibleAsv = null;
 let currentSearchVerses = []; // Holds the list of verses from the last search
 let notes = []; // Array of sermon notes: { id, title, content, updatedAt }
 let currentNoteId = null; // Currently active note ID
+let checkedNoteIds = new Set(); // Set of checked note IDs for bulk deletion
 
 // Real-time Cloud Synchronization (via Vercel API CORS proxy)
 const CLOUD_BIN_URL = '/api/notes';
@@ -185,6 +186,10 @@ const btnCopyNote = document.getElementById('btn-copy-note');
 
 const notesSidebar = document.getElementById('notes-sidebar');
 const notesList = document.getElementById('notes-list');
+const sidebarFooter = document.getElementById('sidebar-footer');
+const chkSelectAll = document.getElementById('chk-select-all');
+const btnDeleteChecked = document.getElementById('btn-delete-checked');
+const checkedCount = document.getElementById('checked-count');
 const btnNewNote = document.getElementById('btn-new-note');
 const btnCloseLibrary = document.getElementById('btn-close-library');
 const btnDeleteAllNotes = document.getElementById('btn-delete-all-notes');
@@ -815,6 +820,10 @@ function loadNotes() {
   }
   if (!notes) notes = [];
 
+  // Prune checkedNoteIds that no longer exist
+  const existingIds = new Set(notes.map(n => n.id));
+  checkedNoteIds = new Set([...checkedNoteIds].filter(id => existingIds.has(id)));
+
   // Clean up legacy auto-generated default notes that have no content
   const hadDefaultNote = notes.some(n =>
     (n.title === '기본 설교노트' || n.id.startsWith('default-')) && n.content.trim() === ''
@@ -870,13 +879,26 @@ function renderNotesList() {
         <span>위의 <strong>+ 새 노트</strong> 버튼으로<br>첫 설교노트를 만들어 보세요.</span>
       </div>
     `;
+    if (sidebarFooter) sidebarFooter.classList.add('hidden');
+    checkedNoteIds.clear();
     return;
   }
+
+  if (sidebarFooter) sidebarFooter.classList.remove('hidden');
 
   // Sort notes by updatedAt in descending order (newest first)
   const sortedNotes = [...notes].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
   sortedNotes.forEach(note => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'note-item-wrapper';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'note-checkbox';
+    checkbox.dataset.id = note.id;
+    checkbox.checked = checkedNoteIds.has(note.id);
+
     const noteEl = document.createElement('div');
     noteEl.className = `note-item ${note.id === currentNoteId ? 'active' : ''}`;
     
@@ -900,8 +922,42 @@ function renderNotesList() {
       }
     });
 
-    notesList.appendChild(noteEl);
+    checkbox.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent switching active note when clicking checkbox
+    });
+
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        checkedNoteIds.add(note.id);
+      } else {
+        checkedNoteIds.delete(note.id);
+      }
+      updateSidebarFooterUI();
+    });
+
+    wrapper.appendChild(checkbox);
+    wrapper.appendChild(noteEl);
+    notesList.appendChild(wrapper);
   });
+
+  updateSidebarFooterUI();
+}
+
+function updateSidebarFooterUI() {
+  const totalNotesCount = notes.length;
+  const selectedCount = checkedNoteIds.size;
+
+  if (checkedCount) {
+    checkedCount.textContent = selectedCount;
+  }
+
+  if (btnDeleteChecked) {
+    btnDeleteChecked.disabled = selectedCount === 0;
+  }
+
+  if (chkSelectAll) {
+    chkSelectAll.checked = totalNotesCount > 0 && selectedCount === totalNotesCount;
+  }
 }
 
 
@@ -992,6 +1048,7 @@ function deleteActiveNote() {
 
   // Filter out the deleted note
   notes = notes.filter(n => n.id !== currentNoteId);
+  checkedNoteIds.delete(currentNoteId);
 
   saveNotes();
 
@@ -1021,6 +1078,7 @@ function deleteAllNotes() {
   // Clear all notes
   notes = [];
   currentNoteId = null;
+  checkedNoteIds.clear();
 
   saveNotes();
   showEmptyState();
@@ -1028,6 +1086,39 @@ function deleteAllNotes() {
   // Sync to cloud
   syncToCloud();
   showToast(`${count}개의 노트가 모두 삭제되었습니다.`, 'success');
+}
+
+function deleteCheckedNotes() {
+  const selectedCount = checkedNoteIds.size;
+  if (selectedCount === 0) {
+    showToast('선택된 노트가 없습니다.', 'info');
+    return;
+  }
+
+  if (!confirm(`선택한 설교 노트 ${selectedCount}개를 정말 삭제하시겠습니까?\n삭제된 내용은 복구할 수 없습니다.`)) {
+    return;
+  }
+
+  // Filter out the deleted notes
+  const activeNoteWasDeleted = checkedNoteIds.has(currentNoteId);
+  notes = notes.filter(n => !checkedNoteIds.has(n.id));
+
+  // Clear checkedNoteIds
+  checkedNoteIds.clear();
+
+  saveNotes();
+
+  if (notes.length === 0) {
+    // No notes left — show empty state
+    showEmptyState();
+  } else if (activeNoteWasDeleted) {
+    // Switch to the first remaining note
+    switchNote(notes[0].id);
+  }
+
+  // Sync immediately
+  syncToCloud();
+  showToast(`${selectedCount}개의 노트가 삭제되었습니다.`, 'success');
 }
 
 
@@ -1428,6 +1519,25 @@ function setupPremiumEventListeners() {
   btnDeleteNote.addEventListener('click', deleteActiveNote);
   if (btnDeleteAllNotes) {
     btnDeleteAllNotes.addEventListener('click', deleteAllNotes);
+  }
+
+  // Bulk Selection and Deletion Event Listeners
+  if (chkSelectAll) {
+    chkSelectAll.addEventListener('change', () => {
+      const isChecked = chkSelectAll.checked;
+      if (isChecked) {
+        notes.forEach(note => {
+          checkedNoteIds.add(note.id);
+        });
+      } else {
+        checkedNoteIds.clear();
+      }
+      renderNotesList();
+    });
+  }
+
+  if (btnDeleteChecked) {
+    btnDeleteChecked.addEventListener('click', deleteCheckedNotes);
   }
   
   // Note clipboard copy

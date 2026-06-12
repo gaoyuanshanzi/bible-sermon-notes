@@ -232,6 +232,17 @@
           <div id="notes-list" class="notes-list">
             <!-- Dynamically rendered list of notes -->
           </div>
+          <div id="sidebar-footer" class="sidebar-footer hidden">
+            <div class="sidebar-footer-actions">
+              <label class="select-all-wrapper" title="모든 노트 선택/해제">
+                <input type="checkbox" id="chk-select-all" class="note-checkbox">
+                <span>전체 선택</span>
+              </label>
+              <button id="btn-delete-checked" class="btn-delete-checked" title="선택한 노트 일괄 삭제" disabled>
+                <i class="fa-solid fa-trash-can"></i> 선택 삭제 (<span id="checked-count">0</span>)
+              </button>
+            </div>
+          </div>
         </aside>
       </div>
     </div>

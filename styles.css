@@ -1396,3 +1396,110 @@ body {
     opacity: 0;
   }
 }
+
+/* ==========================================================================
+   Note Item Wrapper & Checkbox Styles
+   ========================================================================== */
+.note-item-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.note-item-wrapper .note-item {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Custom Checkbox Design */
+.note-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  outline: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-card);
+  flex-shrink: 0;
+}
+
+.note-checkbox:checked {
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.note-checkbox:checked::after {
+  content: '\f00c';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: white;
+  font-size: 10px;
+}
+
+.note-checkbox:hover {
+  border-color: var(--text-secondary);
+  box-shadow: 0 0 4px var(--accent-glow);
+}
+
+/* Sidebar Footer & Bulk Actions */
+.sidebar-footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.select-all-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.select-all-wrapper:hover {
+  color: var(--text-primary);
+}
+
+.select-all-wrapper .note-checkbox {
+  margin: 0;
+}
+
+.btn-delete-checked {
+  background-color: transparent;
+  color: var(--accent-error);
+  border: 1.5px solid #fca5a5;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-delete-checked:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.06);
+  border-color: var(--accent-error);
+}
+
+.btn-delete-checked:disabled {
+  color: var(--text-muted);
+  border-color: var(--border-color);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
